@@ -4,11 +4,10 @@
 
   <groupId>com.salesforce.perfeng.uiperf</groupId>
   <artifactId>ImageOptimization</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.1</version>
   <packaging>jar</packaging>
 
   <name>ImageOptimization</name>
-  <url>http://maven.apache.org</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -21,16 +20,6 @@
       <version>4.4</version>
       <scope>test</scope>
     </dependency>
-    <!-- dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-api</artifactId>
-      <version>2.0-beta9</version>
-    </dependency -->
-    <!-- dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-core</artifactId>
-      <version>2.0-beta9</version>
-    </dependency -->
 	<dependency>
 	    <groupId>org.slf4j</groupId>
 	    <artifactId>slf4j-simple</artifactId>
@@ -79,6 +68,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
+        <version>2.2.1</version>
         <executions>
           <execution>
             <id>attach-sources</id>
@@ -94,4 +84,20 @@
     <outputDirectory>bin</outputDirectory>
     <testOutputDirectory>bin</testOutputDirectory>
   </build>
+  <organization>
+  	<name>salesforce.com, inc</name>
+  	<url>https://www.salesforce.com</url>
+  </organization>
+  <scm>
+  	<developerConnection>Eric Perret</developerConnection>
+  	<url>https://git.soma.salesforce.com/perfeng/ImageOptimization</url>
+  </scm>
+  <url>https://git.soma.salesforce.com/perfeng/ImageOptimization</url>
+  <description>Library used to optimize images so that they are smaller in size (less bytes) while maintaining the exact same quality.
+It can also...
+1) convert gif to png
+2) convert images to webp
+
+Note: It only runs on Linux and requires additional binaries from https://git.soma.salesforce.com/perfeng/ImageOptimization/tree/master/lib/binary/linux</description>
+  <inceptionYear>2013</inceptionYear>
 </project>

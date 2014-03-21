@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import com.salesforce.perfeng.uiperf.ThirdPartyBinaryNotFoundException;
 import com.salesforce.perfeng.uiperf.imageoptimization.dto.OptimizationResult;
+import com.salesforce.perfeng.uiperf.imageoptimization.utils.FixedFileUtils;
 import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageFileOptimizationException;
 import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageUtils;
 
@@ -291,7 +292,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 			return null;
 		}
 
-		FileUtils.copyFile(workingFile, minifiedFile);
+		FixedFileUtils.copyFile(workingFile, minifiedFile);
 		return minifiedFile;
 	}
 
@@ -737,7 +738,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
 			File optimizedFile = null;
 			try {
-				FileUtils.copyFile(masterFile, workingFile);
+				FixedFileUtils.copyFile(masterFile, workingFile);
 
 				optimizedFile = executeOptimization();
 
@@ -810,7 +811,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
 			File optimizedFile = null;
 			try {
-				FileUtils.copyFile(masterFile, workingFile);
+				FixedFileUtils.copyFile(masterFile, workingFile);
 
 				optimizedFile = executeJpegtran(workingFile, workingFile.getCanonicalPath());
 				optimizedFile = executeJfifremove(optimizedFile, optimizedFile.getCanonicalPath());
@@ -872,7 +873,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
 			File optimizedFile = null;
 			try {
-				FileUtils.copyFile(masterFile, workingFile);
+				FixedFileUtils.copyFile(masterFile, workingFile);
 
 				if(!isGif || !ImageUtils.isAminatedGif(workingFile)) {
 
@@ -944,7 +945,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 			try {
 				boolean fileTypeChanged = false;
 
-				FileUtils.copyFile(masterFile, workingFile);
+				FixedFileUtils.copyFile(masterFile, workingFile);
 
 				optimizedFile = executeGifsicle(workingFile, workingFile.getCanonicalPath());
 

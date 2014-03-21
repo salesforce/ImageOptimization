@@ -142,7 +142,6 @@ public class ImageUtilsTest {
 		assertTrue(ImageUtils.visuallyCompare(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/forceapp_bg.gif"), convertedFile));
 	}
 
-
 	/**
 	 * Test for {@link ImageUtils#isAminatedGif(File)}.
 	 */

@@ -12,10 +12,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 /**
- * Copied from the 2.4 version of {@link org.apache.commons.io.FileUtils}. 
+ * Copied from the 2.4 version of {@link FileUtils}. 
  * Because of dependency issues downstream I cannot upgrade to the latest 
  * version of commons io.
  * 
@@ -26,7 +27,7 @@ public class FixedFileUtils {
 	/**
      * The file copy buffer size (30 MB)
      */
-    private static final long FILE_COPY_BUFFER_SIZE = org.apache.commons.io.FileUtils.ONE_MB * 30;
+    private static final long FILE_COPY_BUFFER_SIZE = FileUtils.ONE_MB * 30;
 	
     /**
      * Internal copy file method.
