@@ -212,7 +212,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		final String binaryDirectoryPath = binaryDirectory.getAbsolutePath() + File.separator;
 		
 		cwebpBinaryPath      = binaryDirectoryPath + "cwebp";
-		gif2webpBinaryPath    = binaryDirectoryPath + "gif2webp";
+		gif2webpBinaryPath   = binaryDirectoryPath + "gif2webp";
 		gifsicleBinaryPath   = binaryDirectoryPath + "gifsicle";
 		jpegtranBinaryPath   = binaryDirectoryPath + "jpegtran";
 		// Needs to be escaped because it is passed as an argument to the bash 
@@ -484,7 +484,10 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
 		final Process ps;
 		try {
-			final ProcessBuilder pb = new ProcessBuilder(pngoutBinaryPath, workingFilePath, workingFilePath, "-y");
+			// Slightly different from the other binary calls because PNG out 
+			// displays an error when long file paths are used.
+			final ProcessBuilder pb = new ProcessBuilder(pngoutBinaryPath, workingFile.getName(), workingFile.getName(), "-y");
+			pb.directory(workingFile.getParentFile());
 			pb.redirectErrorStream(true);
 			ps = pb.start();
 		} catch(final IOException ioe) {
