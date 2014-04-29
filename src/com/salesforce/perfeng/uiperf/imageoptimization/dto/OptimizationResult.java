@@ -1,6 +1,30 @@
-/**
+/*******************************************************************************
+ * Copyright (c) 2014, Salesforce.com, Inc.
+ * All rights reserved.
  * 
- */
+ * Redistribution and use in source and binary forms, with or without 
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ * Redistributions of source code must retain the above copyright notice, this 
+ * list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, 
+ * this list of conditions and the following disclaimer in the documentation 
+ * and/or other materials provided with the distribution.
+ * Neither the name of Salesforce.com nor the names of its contributors may be 
+ * used to endorse or promote products derived from this software without 
+ * specific prior written permission.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE 
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
 package com.salesforce.perfeng.uiperf.imageoptimization.dto;
 
 import java.io.File;
@@ -33,19 +57,19 @@ public class OptimizationResult<C> {
 	 *                          {@link File#length()}
 	 * @param originalFile The original version of the image
 	 * @param originalFileSize The size of the original image (aka 
-	 *                     {@link File#length()}
-	 * @param fileTypeChanged <code>true</code> if the file type of the 
-	 *                        optimized image is different than the file type of
-	 *                        the original images. This usually is 
-	 *                        <code>true</code> when converting a GIF to PNG 
-	 *                        because it is small in length.
-	 * @param failedAutomatedTest <code>true</code> if the file failed the 
-	 *                            automated validation after compression and 
-	 *                            should be considered ineligible for check-in.
-	 *                            If <code>false</code> then we have a valid 
-	 *                            optimized image.
-	 * @param isBrowserSpecific <code>true</code> if the image format only works
-	 *                          in one type of browser.
+	 *                         {@link File#length()}
+	 * @param fileTypeChanged {@code true} if the file type of the optimized 
+	 *                        image is different than the file type of the 
+	 *                        original images. This usually is {@code true} when
+	 *                        converting a GIF to PNG because it is small in 
+	 *                        length.
+	 * @param failedAutomatedTest {@code true} if the file failed the automated 
+	 *                            validation after compression and should be 
+	 *                            considered ineligible for check-in. If 
+	 *                            {@code false} then we have a valid optimized 
+	 *                            image.
+	 * @param isBrowserSpecific {@code true} if the image format only works in 1
+	 *                          type of browser.
 	 */
 	public OptimizationResult(final File optimizedFile, final long optimizedFileSize, final File originalFile, final long originalFileSize, final boolean fileTypeChanged, final boolean failedAutomatedTest, final boolean isBrowserSpecific) {
 		this.optimizedFile = optimizedFile;

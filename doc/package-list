@@ -1,0 +1,5 @@
+com.salesforce.perfeng.uiperf
+com.salesforce.perfeng.uiperf.imageoptimization
+com.salesforce.perfeng.uiperf.imageoptimization.dto
+com.salesforce.perfeng.uiperf.imageoptimization.service
+com.salesforce.perfeng.uiperf.imageoptimization.utils
