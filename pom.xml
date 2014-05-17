@@ -90,7 +90,7 @@
   </organization>
   <scm>
   	<developerConnection>Eric Perret</developerConnection>
-  	<url>https://git.soma.salesforce.com/perfeng/ImageOptimization</url>
+  	<url>https://github.com/forcedotcom/ImageOptimization</url>
   </scm>
   <url>https://git.soma.salesforce.com/perfeng/ImageOptimization</url>
   <description>Library used to optimize images so that they are smaller in size (less bytes) while maintaining the exact same quality.
