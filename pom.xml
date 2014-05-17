@@ -98,6 +98,6 @@ It can also...
 1) convert gif to png
 2) convert images to webp
 
-Note: It only runs on Linux and requires additional binaries from https://git.soma.salesforce.com/perfeng/ImageOptimization/tree/master/lib/binary/linux</description>
+Note: It only runs on Linux and requires additional binaries from https://github.com/forcedotcom/ImageOptimization/tree/master/lib/binary/linux</description>
   <inceptionYear>2013</inceptionYear>
 </project>
