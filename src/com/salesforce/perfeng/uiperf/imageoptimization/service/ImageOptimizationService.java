@@ -244,14 +244,10 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		jpegtranBinaryPath   = binaryDirectoryPath + "jpegtran";
 		// Needs to be escaped because it is passed as an argument to the bash 
 		// command.
-		jfifremoveBinaryPath = escapeUnixPath(binaryDirectoryPath + "jfifremove");
+		jfifremoveBinaryPath = "\"" + binaryDirectoryPath + "jfifremove" + "\"";
 		advpngBinaryPath     = binaryDirectoryPath + "advpng";
 		optipngBinaryPath    = binaryDirectoryPath + "optipng";
 		pngoutBinaryPath     = binaryDirectoryPath + "pngout";
-	}
-	
-	private static String escapeUnixPath(final String workingFilePath) {
-		return workingFilePath.replaceAll(" ", "\\\\ ");
 	}
 
 	/**
@@ -614,10 +610,10 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
 		final Process ps;
 		try {
-			final String escapedWorkingFilePath = escapeUnixPath(workingFilePath);
 			//Can't redirect the Error stream because it is already redirecting 
 			//the output.
-			ps = new ProcessBuilder("bash", "-c", new StringBuilder(jfifremoveBinaryPath).append(" < ").append(escapedWorkingFilePath).append(" > ").append(escapedWorkingFilePath).append(".tmp2").toString()).start();
+			//ps = new ProcessBuilder("bash", "-c", new StringBuilder(jfifremoveBinaryPath).append(" < ").append(escapedWorkingFilePath).append(" > ").append(escapedWorkingFilePath).append(".tmp2").toString()).start();
+			ps = new ProcessBuilder("bash", "-c", new StringBuilder(jfifremoveBinaryPath).append(" < \"").append(workingFilePath).append("\" > \"").append(workingFilePath).append(".tmp2\"").toString()).start();
 		} catch(final IOException ioe) {
 			throw new ThirdPartyBinaryNotFoundException(JFIFREMOVE_BINARY, ioe);
 		}
