@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -129,6 +130,81 @@ public class ImageOptimizationServiceTest {
 		tmpDir.deleteOnExit();
 		assertNotNull(new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION)));
 	}
+	
+	/**
+	 * Test method for
+	 * {@link ImageOptimizationService#ImageOptimizationService(File, File, int)}.
+	 * 
+	 * @throws IOException Can be thrown by the
+	 *                     <code>ImageOptimizationService</code> constructor if 
+	 *                     its passed in file has an issue.
+	 */
+	@SuppressWarnings("unused")
+	@Test
+	public void testImageOptimizationService2() throws IOException {
+		try {
+			new ImageOptimizationService<>(File.createTempFile("qqq", "qqq"), new File(DEFAULT_BINARY_APP_LOCATION), 1);
+			fail("It is expected that the file does not exist.");
+		} catch(final IllegalArgumentException ignore) {
+			// if this catch block is executed then the test passed and the File
+			// does not exist.
+		}
+		try {
+			new ImageOptimizationService<>(null, new File(DEFAULT_BINARY_APP_LOCATION), 1);
+			fail("It is expected that the file does not exist.");
+		} catch(final IllegalArgumentException ignore) {
+			// if this catch block is executed then the test passed and the File
+			// does not exist.
+		}
+		try {
+			final File file = File.createTempFile("qqq", "qqq");
+			file.createNewFile();
+			file.deleteOnExit();
+			new ImageOptimizationService<>(file, new File(DEFAULT_BINARY_APP_LOCATION), 1);
+			fail("failed because we expected tthe temp directory to be a file instead of a directory.");
+		} catch(final IllegalArgumentException ignore) {
+			// if this catch block is executed then the test passed and the File
+			// is a file instead of a directory.
+		}
+		
+		File tmpDir = File.createTempFile(ImageOptimizationServiceTest.class.getName(), "");
+		tmpDir.delete();
+		tmpDir.mkdir();
+		tmpDir.deleteOnExit();
+		assertNotNull(new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION), 1));
+		
+		
+		try {
+			new ImageOptimizationService<>(File.createTempFile("qqq", "qqq"), new File(DEFAULT_BINARY_APP_LOCATION), 0);
+			fail("It is expected that the file does not exist.");
+		} catch(final IllegalArgumentException ignore) {
+			// if this catch block is executed then the test passed and the File
+			// does not exist.
+		}
+		try {
+			new ImageOptimizationService<>(null, new File(DEFAULT_BINARY_APP_LOCATION), 0);
+			fail("It is expected that the file does not exist.");
+		} catch(final IllegalArgumentException ignore) {
+			// if this catch block is executed then the test passed and the File
+			// does not exist.
+		}
+		try {
+			final File file = File.createTempFile("qqq", "qqq");
+			file.createNewFile();
+			file.deleteOnExit();
+			new ImageOptimizationService<>(file, new File(DEFAULT_BINARY_APP_LOCATION), 0);
+			fail("failed because we expected tthe temp directory to be a file instead of a directory.");
+		} catch(final IllegalArgumentException ignore) {
+			// if this catch block is executed then the test passed and the File
+			// is a file instead of a directory.
+		}
+		
+		tmpDir = File.createTempFile(ImageOptimizationServiceTest.class.getName(), "");
+		tmpDir.delete();
+		tmpDir.mkdir();
+		tmpDir.deleteOnExit();
+		assertNotNull(new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION), 0));
+	}
 
 	private static final void validateFileOptimization(final OptimizationResult<Object> result, final ImageOptimizationTestDTO imageOptimizationTestDTO, final boolean isWebP) throws IOException {
 		final String errorMsg = String.format("failed for image \"%s\"", imageOptimizationTestDTO.getMasterFile().getName());
@@ -217,9 +293,12 @@ public class ImageOptimizationServiceTest {
 	 *                     when creating a temp file used in the test
 	 * @throws IOException Thrown if there is an issue reading from the file 
 	 *                     system.
+	 * @throws TimeoutException Thrown if it takes to long to optimize an image.
+	 * @throws ImageFileOptimizationException Thrown if there is an error trying
+	 *                                        to optimize an image.
 	 */
 	@Test
-	public void testOptimizeAllImagesALL() throws IOException {
+	public void testOptimizeAllImagesALL() throws IOException, ImageFileOptimizationException, TimeoutException {
 		
 		final ImageOptimizationTestDTO[] imageOptimizationTestDTOList = {new ImageOptimizationTestDTO("csv_120.png", false, false, true),
 				                                                         new ImageOptimizationTestDTO("sharing_model2.jpg", false, false, true),
@@ -316,9 +395,12 @@ public class ImageOptimizationServiceTest {
 	 *                     when creating a temp file used in the test.
 	 * @throws IOException Thrown if there is an issue reading from the file 
 	 *                     system.
+	 * @throws TimeoutException Thrown if it takes to long to optimize an image.
+	 * @throws ImageFileOptimizationException Thrown if there is an error trying
+	 *                                        to optimize an image.
 	 */
 	@Test
-	public void testOptimizeAllImagesNONE() throws IOException {
+	public void testOptimizeAllImagesNONE() throws IOException, ImageFileOptimizationException, TimeoutException {
 		
 		final ImageOptimizationTestDTO[] imageOptimizationTestDTOList = {new ImageOptimizationTestDTO("csv_120.png", false, false, true),
                 new ImageOptimizationTestDTO("sharing_model2.jpg", false, false, true),
@@ -415,9 +497,12 @@ public class ImageOptimizationServiceTest {
 	 *                     when creating a temp file used in the test.
 	 * @throws IOException Thrown if there is an issue reading from the file 
 	 *                     system.
+	 * @throws TimeoutException Thrown if it takes to long to optimize an image.
+	 * @throws ImageFileOptimizationException Thrown if there is an error trying
+	 *                                        to optimize an image.
 	 */
 	@Test
-	public void testOptimizeAllImagesIE6SAFE() throws IOException {
+	public void testOptimizeAllImagesIE6SAFE() throws IOException, ImageFileOptimizationException, TimeoutException {
 		
 		final ImageOptimizationTestDTO[] imageOptimizationTestDTOList = {new ImageOptimizationTestDTO("csv_120.png", false, false, true),
                 new ImageOptimizationTestDTO("sharing_model2.jpg", false, false, true),
@@ -501,6 +586,176 @@ public class ImageOptimizationServiceTest {
 		assertTrue(results.isEmpty());
 		
 		results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.IE6SAFE, true, Collections.EMPTY_LIST);
+		assertNotNull(results);
+		assertTrue(results.isEmpty());
+	}
+	
+	/**
+	 * Test for 
+	 * {@link ImageOptimizationService#optimizeAllImages(FileTypeConversion, boolean, java.util.Collection)}
+	 * with timeout set.
+	 * 
+	 * @throws IOException can be thrown by the 
+	 *                     <code>ImageOptimizationService</code> constructor or 
+	 *                     when creating a temp file used in the test.
+	 * @throws IOException Thrown if there is an issue reading from the file 
+	 *                     system.
+	 * @throws ImageFileOptimizationException Thrown if there is an error trying
+	 *                                        to optimize an image.
+	 * @throws TimeoutException Thrown if optimizing an image timed out.
+	 */
+	@Test
+	public void testOptimizeAllImagesNONEWithTimeoutFailure() throws IOException, ImageFileOptimizationException, TimeoutException {
+		
+		final ImageOptimizationTestDTO[] imageOptimizationTestDTOList = {new ImageOptimizationTestDTO("csv_120.png", false, false, true),
+                new ImageOptimizationTestDTO("sharing_model2.jpg", false, false, true),
+                new ImageOptimizationTestDTO("loading.gif", false, false, true),
+                new ImageOptimizationTestDTO("el_icon.gif", false, false, true),
+                new ImageOptimizationTestDTO("safe32.png", false, false, true),
+                new ImageOptimizationTestDTO("no_transparency.gif", false, false, true),
+                new ImageOptimizationTestDTO("doctype_16_sprite.png", false, false, false),
+                new ImageOptimizationTestDTO("addCol.gif", false, false, false),
+                new ImageOptimizationTestDTO("s-arrow-bo.gif", false, false, true),
+                new ImageOptimizationTestDTO("imagebomb.png", false, false, true)};
+		
+		final List<File> filesToOptimize = new ArrayList<>(imageOptimizationTestDTOList.length);
+		for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
+			filesToOptimize.add(imageOptimizationTestDTO.getMasterFile());
+		}
+		
+		try {
+			//Testing with NONE
+			new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 1).optimizeAllImages(FileTypeConversion.NONE, false, filesToOptimize);
+			fail();
+		} catch(final TimeoutException te) {
+			//expected the exception
+		}
+		
+		try {
+			//Testing with NONE and YES WebP
+			new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 1).optimizeAllImages(FileTypeConversion.NONE, true, filesToOptimize);
+			fail();
+		} catch(final TimeoutException te) {
+			//expected the exception
+		}
+		
+		List<OptimizationResult<Object>> results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.NONE, false, (Collection<File>)null);
+		assertNotNull(results);
+		assertTrue(results.isEmpty());
+		
+		results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 1).optimizeAllImages(FileTypeConversion.NONE, true, (Collection<File>)null);
+		assertNotNull(results);
+		assertTrue(results.isEmpty());
+		
+		//Testing an empty list of images
+		results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 1).optimizeAllImages(FileTypeConversion.NONE, false, Collections.EMPTY_LIST);
+		assertNotNull(results);
+		assertTrue(results.isEmpty());
+		
+		results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 1).optimizeAllImages(FileTypeConversion.NONE, true, Collections.EMPTY_LIST);
+		assertNotNull(results);
+		assertTrue(results.isEmpty());
+	}
+	
+	/**
+	 * Test for 
+	 * {@link ImageOptimizationService#optimizeAllImages(FileTypeConversion, boolean, java.util.Collection)}
+	 * with timeout set.
+	 * 
+	 * @throws IOException can be thrown by the 
+	 *                     <code>ImageOptimizationService</code> constructor or 
+	 *                     when creating a temp file used in the test.
+	 * @throws IOException Thrown if there is an issue reading from the file 
+	 *                     system.
+	 * @throws ImageFileOptimizationException Thrown if there is an error trying
+	 *                                        to optimize an image.
+	 * @throws TimeoutException Thrown if optimizing an image timed out.
+	 */
+	@Test
+	public void testOptimizeAllImagesNONEWithTimeoutSuccess() throws IOException, ImageFileOptimizationException, TimeoutException {
+		
+		final ImageOptimizationTestDTO[] imageOptimizationTestDTOList = {new ImageOptimizationTestDTO("csv_120.png", false, false, true),
+                new ImageOptimizationTestDTO("sharing_model2.jpg", false, false, true),
+                new ImageOptimizationTestDTO("loading.gif", false, false, true),
+                new ImageOptimizationTestDTO("el_icon.gif", false, false, true),
+                new ImageOptimizationTestDTO("safe32.png", false, false, true),
+                new ImageOptimizationTestDTO("no_transparency.gif", false, false, true),
+                new ImageOptimizationTestDTO("doctype_16_sprite.png", false, false, false),
+                new ImageOptimizationTestDTO("addCol.gif", false, false, false),
+                new ImageOptimizationTestDTO("s-arrow-bo.gif", false, false, true)};
+
+		final int numberOfOptimizedImages = getNumberOfOptimizedImages(imageOptimizationTestDTOList);
+		
+		final List<File> filesToOptimize = new ArrayList<>(imageOptimizationTestDTOList.length);
+		for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
+			filesToOptimize.add(imageOptimizationTestDTO.getMasterFile());
+		}
+		
+		//Testing with NONE
+		List<OptimizationResult<Object>> results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 60).optimizeAllImages(FileTypeConversion.NONE, false, filesToOptimize);
+		assertNotNull(results);
+		
+		Map<String, OptimizationResult<Object>> treasureMap = new HashMap<>(numberOfOptimizedImages);
+		for(final OptimizationResult<Object> result : results) {
+			assertNotNull(result);
+			treasureMap.put(result.getOriginalFile().getName(), result);
+		}
+		
+		for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
+			validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName()), imageOptimizationTestDTO, false);
+		}
+		assertEquals(numberOfOptimizedImages, treasureMap.size());
+		assertEquals(numberOfOptimizedImages, results.size());
+		
+		//Testing with NONE and YES WebP
+		final int numberOfResultImages = numberOfOptimizedImages + getNumberOfWebPCompatibleImages(imageOptimizationTestDTOList);
+		results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 60).optimizeAllImages(FileTypeConversion.NONE, true, filesToOptimize);
+		assertNotNull(results);
+		
+		treasureMap = new HashMap<>(numberOfResultImages);
+		for(final OptimizationResult<Object> result : results) {
+			assertNotNull(result);
+			if(FilenameUtils.isExtension(result.getOptimizedFile().getName(), IImageOptimizationService.WEBP_EXTENSION)) {
+				treasureMap.put(result.getOriginalFile().getName() + WEBP_ID, result);
+			} else {
+				treasureMap.put(result.getOriginalFile().getName(), result);
+			}
+		}
+		
+		for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
+			validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName()), imageOptimizationTestDTO, false);
+		}
+		assertEquals(numberOfResultImages, treasureMap.size());
+		assertEquals(numberOfResultImages, results.size());
+		
+		//WebP Check
+		for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
+			if(imageOptimizationTestDTO.isJPEG()) {
+				//JPEG is not converted to WEBP
+				assertNull(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID));
+			} else if(imageOptimizationTestDTO.isAnimatedGif()) {
+				//Animated GIF is not converted to WEBP
+				assertNull(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID));
+			} else {
+				validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), imageOptimizationTestDTO, true);
+			}
+		}
+		
+		//Testing a null list of images
+		results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 60).optimizeAllImages(FileTypeConversion.NONE, false, (Collection<File>)null);
+		assertNotNull(results);
+		assertTrue(results.isEmpty());
+		
+		results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 60).optimizeAllImages(FileTypeConversion.NONE, true, (Collection<File>)null);
+		assertNotNull(results);
+		assertTrue(results.isEmpty());
+		
+		//Testing an empty list of images
+		results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 60).optimizeAllImages(FileTypeConversion.NONE, false, Collections.EMPTY_LIST);
+		assertNotNull(results);
+		assertTrue(results.isEmpty());
+		
+		results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 60).optimizeAllImages(FileTypeConversion.NONE, true, Collections.EMPTY_LIST);
 		assertNotNull(results);
 		assertTrue(results.isEmpty());
 	}
