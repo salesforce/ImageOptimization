@@ -56,9 +56,9 @@ The heavy lifing is done by 6 different binary applications:
 The JAVA code calls out to these binaries and using the appropriate ones for the image format.  The code does this twice.  For some reason passing in an already optimized image will result in a few bytes reduction the second time it is optimized.
 
 For converting the images we use 3 binaries:
-* ImageMagick ([source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/ImageMagick-6.8.7-10.zip), [homepage]())
-* cwebp ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/advpng), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/libwebp-0.3.1-linux-x86-32.zip), [homepage]())
-* git2webp ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/advpng), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/libwebp-0.3.1-linux-x86-32.zip), [homepage]())
+* ImageMagick ([source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/ImageMagick-6.8.7-10.zip), [homepage](http://www.imagemagick.org/))
+* cwebp ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/advpng), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/libwebp-0.3.1-linux-x86-32.zip), [homepage](https://developers.google.com/speed/webp/docs/cwebp))
+* gif2webp ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/advpng), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/libwebp-0.3.1-linux-x86-32.zip), [homepage](https://developers.google.com/speed/webp/docs/gif2webp))
 
 ### Automated Validation ###
 
