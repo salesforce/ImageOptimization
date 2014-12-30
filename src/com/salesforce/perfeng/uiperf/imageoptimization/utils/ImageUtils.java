@@ -20,6 +20,8 @@ import javax.imageio.stream.ImageInputStream;
 import javax.swing.ImageIcon;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.http.annotation.Immutable;
+import org.apache.http.annotation.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +33,8 @@ import com.salesforce.perfeng.uiperf.ThirdPartyBinaryNotFoundException;
  * @author eperret (Eric Perret)
  * @since 186.internal
  */
+@Immutable
+@ThreadSafe
 public class ImageUtils {
 
 	private final static Logger logger = LoggerFactory.getLogger(ImageUtils.class);

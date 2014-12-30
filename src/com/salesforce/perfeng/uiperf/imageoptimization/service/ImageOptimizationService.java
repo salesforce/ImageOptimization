@@ -31,6 +31,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,6 +56,8 @@ import javax.imageio.ImageIO;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.annotation.Immutable;
+import org.apache.http.annotation.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,6 +74,8 @@ import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageUtils;
  * @since 186.internal
  * @param <C> Contains the changeList information.
  */
+@Immutable
+@ThreadSafe
 public class ImageOptimizationService<C> implements IImageOptimizationService<C> {
 
 	/**
@@ -127,7 +133,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	 * Name of the {@value #JPEGTRAN_BINARY} binary application used to optimize 
 	 * a {@value IImageOptimizationService#JPEG_MIME_TYPE} file. On linux this 
 	 * app requires libjpeg62 to be installed. Run 
-	 * "sudo apt-get install libjpeg62".
+	 * "sudo apt-get install libjpeg62:i386".
 	 */
 	protected static final String JPEGTRAN_BINARY  = "jpegtran";
 	/**
@@ -150,6 +156,11 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	 * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
 	 */
 	protected static final String PNGOUT_BINARY    = "pngout";
+	/**
+	 * Name of the {@value #PNGQUANT_BINARY} binary application used to optimize 
+	 * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
+	 */
+	protected static final String PNGQUANT_BINARY    = "pngquant";
 	
 	/**
 	 * Path of the "cwebp" binary application used to convert a 
@@ -193,6 +204,11 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	 * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
 	 */
 	protected final String pngoutBinaryPath;
+	/**
+	 * Path of the {@value #PNGQUANT_BINARY} binary application used to optimize 
+	 * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
+	 */
+	protected final String pngquantBinaryPath;
 	
 	private final int MAX_NUMBER_OF_THREADS = Runtime.getRuntime().availableProcessors();
 
@@ -250,16 +266,17 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		
 		final String binaryDirectoryPath = binaryDirectory.getAbsolutePath() + File.separator;
 		
-		cwebpBinaryPath      = binaryDirectoryPath + "cwebp";
-		gif2webpBinaryPath   = binaryDirectoryPath + "gif2webp";
-		gifsicleBinaryPath   = binaryDirectoryPath + "gifsicle";
-		jpegtranBinaryPath   = binaryDirectoryPath + "jpegtran";
+		cwebpBinaryPath      = binaryDirectoryPath + CWEBP_BINARY;
+		gif2webpBinaryPath   = binaryDirectoryPath + GIF2WEBP_BINARY;
+		gifsicleBinaryPath   = binaryDirectoryPath + GIFSICLE_BINARY;
+		jpegtranBinaryPath   = binaryDirectoryPath + JPEGTRAN_BINARY;
 		// Needs to be quoted because it is passed as an argument to the bash 
 		// command.
-		jfifremoveBinaryPath = "\"" + binaryDirectoryPath + "jfifremove" + "\"";
-		advpngBinaryPath     = binaryDirectoryPath + "advpng";
-		optipngBinaryPath    = binaryDirectoryPath + "optipng";
-		pngoutBinaryPath     = binaryDirectoryPath + "pngout";
+		jfifremoveBinaryPath = '\"' + binaryDirectoryPath + JFIFREMOVE_BINARY + '\"';
+		advpngBinaryPath     = binaryDirectoryPath + ADVPNG_BINARY;
+		optipngBinaryPath    = binaryDirectoryPath + OPTIPNG_BINARY;
+		pngoutBinaryPath     = binaryDirectoryPath + PNGOUT_BINARY;
+		pngquantBinaryPath   = binaryDirectoryPath + PNGQUANT_BINARY;
 	}
 	
 	/**
@@ -453,7 +470,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 				IOUtils.copy(is, writer);
 				final StringBuilder errorMessage = new StringBuilder("Optimization failed with edit code: ").append(ps.exitValue()).append(". ").append(writer);
 				if(ps.exitValue() == 127 /* command not found */) {
-					throw new ThirdPartyBinaryNotFoundException(binaryApplicationName, "Most likely this is due to required libraries not being installed on the OS. On Ubuntu run \"sudo apt-get install libjpeg62\".", new RuntimeException(errorMessage.toString()));
+					throw new ThirdPartyBinaryNotFoundException(binaryApplicationName, "Most likely this is due to required libraries not being installed on the OS. On Ubuntu run \"sudo apt-get install libjpeg62:i386\".", new RuntimeException(errorMessage.toString()));
 				}
 				throw ImageFileOptimizationException.getInstance(originalFile, new RuntimeException(errorMessage.toString()));
 			} catch (final IOException ioe) {
@@ -611,6 +628,59 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 				if(!newFile.renameTo(workingFile)) {
 					logger.warn("Optimization failed to copy file. Moving on with the test.", ImageFileOptimizationException.getInstance(workingFile, "Optimization failed to copy file. Moving on with the test."));
 				}
+			}
+		}
+		return workingFile;
+	}
+	
+	/**
+	 * Executes the binary {@value #PNGQUANT_BINARY} to optimize the input file.
+	 * 
+	 * @param workingFile The file to optimize
+	 * @param workingFilePath The path to the file to optimize
+	 * @return the optimized file
+	 * @throws InterruptedException If the optimization was interrupted.
+	 * @throws ThirdPartyBinaryNotFoundException Thrown if the 
+	 *                                           {@value #PNGQUANT_BINARY}
+	 *                                           application does not exist.
+	 */
+	final File executePngquant(final File workingFile, final String workingFilePath) throws InterruptedException, ThirdPartyBinaryNotFoundException {
+		
+		final Process ps;
+		try {
+			// Slightly different from the other binary calls because PNG out 
+			// displays an error when long file paths are used.
+			final ProcessBuilder pb = new ProcessBuilder(pngquantBinaryPath, "--quality=100-100", "-s1", "--ext", ".png2", "--force", "--", workingFile.getName());
+			pb.directory(workingFile.getParentFile());
+			pb.redirectErrorStream(true);
+			ps = pb.start();
+		} catch(final IOException ioe) {
+			throw new ThirdPartyBinaryNotFoundException(PNGQUANT_BINARY, ioe);
+		}
+		
+		waitFor(ps);
+		
+		// If conversion results in quality below the min quality the image 
+		// won't be saved and pngquant will exit with status code 99.
+		if(ps.exitValue() != 99) {
+			if(ps.exitValue() != 0) {
+				handleOptimizationFailure(ps, PNGQUANT_BINARY, workingFile);
+			}
+			final File newFile;
+			if(IImageOptimizationService.PNG_EXTENSION.equalsIgnoreCase(FilenameUtils.getExtension(workingFile.getName()))) {
+				newFile = new File(workingFilePath + '2');
+			} else {
+				newFile = new File(workingFilePath + ".png2");
+			}
+			
+			if(workingFile.length() > newFile.length()) {
+				try {
+					Files.move(newFile.toPath(), workingFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				} catch (final IOException ioe) {
+					throw ImageFileOptimizationException.getInstance(workingFile, "Optimization failed to copy file.", ioe);
+				}
+			} else {
+				newFile.delete();
 			}
 		}
 		return workingFile;
@@ -890,7 +960,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		public File executeOptimization() throws IOException, InterruptedException {
 			final String path = workingFile.getCanonicalPath();
 			// FIXME Handle the ImageFileOptimizationException in one of the optimizations so it does not impact the other optimizations.
-			return executeOptipng(executePngout(executeAdvpng(executeOptipng(executePngout(executeAdvpng(workingFile, path), path), path), path), path), path);
+			return executePngquant(executeOptipng(executePngout(executeAdvpng(executePngquant(executeOptipng(executePngout(executeAdvpng(workingFile, path), path), path), path), path), path), path), path);
 		}
 	}
 

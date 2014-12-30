@@ -22,7 +22,7 @@ public class ImageFileOptimizationException extends RuntimeException {
 	
 	/**
 	 * @param imagePath The path to the image.
-	 * @param message the detail message indicating why the image optimization 
+	 * @param message The detail message indicating why the image optimization 
 	 *                failed. The detail message is saved for later retrieval by
 	 *                the {@link #getMessage()} method.
 	 */
@@ -30,6 +30,17 @@ public class ImageFileOptimizationException extends RuntimeException {
 		super("Error while optimizing the file \"" + imagePath + "\". " + message);
 	}
 
+	/**
+	 * @param imagePath The path to the image.
+	 * @param message The detail message indicating why the image optimization 
+	 *                failed. The detail message is saved for later retrieval by
+	 *                the {@link #getMessage()} method.
+	 * @param cause The {@link Throwable} that caused this exception to occur.
+	 */
+	public ImageFileOptimizationException(final String imagePath, final String message, final Throwable cause) {
+		super("Error while optimizing the file \"" + imagePath + "\". " + message, cause);
+	}
+	
 	/**
 	 * Creates a new instance of {@link ImageFileOptimizationException}
 	 * 
@@ -52,7 +63,7 @@ public class ImageFileOptimizationException extends RuntimeException {
 	 * Creates a new instance of {@link ImageFileOptimizationException}
 	 * 
 	 * @param image The image that is being processed.
-	 * @param message the detail message indicating why the image optimization 
+	 * @param message The detail message indicating why the image optimization 
 	 *                failed.
 	 * @return the newly created exception
 	 */
@@ -65,5 +76,25 @@ public class ImageFileOptimizationException extends RuntimeException {
 		}
 
 		return new ImageFileOptimizationException(path, message);
+	}
+	
+	/**
+	 * Creates a new instance of {@link ImageFileOptimizationException}
+	 * 
+	 * @param image The image that is being processed.
+	 * @param message The detail message indicating why the image optimization 
+	 *                failed.
+	 * @param cause What caused the image to fail the processing.
+	 * @return the newly created exception
+	 */
+	public static final ImageFileOptimizationException getInstance(final File image, final String message, final Throwable cause) {
+		String path;
+		try {
+			path = image.getCanonicalPath();
+		} catch (final IOException ioe) {
+			path = image.toString();
+		}
+
+		return new ImageFileOptimizationException(path, message, cause);
 	}
 }
