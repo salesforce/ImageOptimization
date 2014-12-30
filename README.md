@@ -15,6 +15,24 @@ Apart from optimizing an image, it also supports a few other things
 * Create a Chrome specific verison, [WebP](https://developers.google.com/speed/webp/?csw=1)
 * Automated validation of images.
 
+## Compilation ##
+
+Asside from using maven for compilation we also require a few binaries that need to be compiled.  Please download and compile these apps.
+
+* advpng ([source](http://sourceforge.net/projects/advancemame/files/advancecomp/1.19/), [homepage](http://advancemame.sourceforge.net/doc-advpng.html))
+* gifsicle ([source](https://github.com/kohler/gifsicle), [homepage](http://www.lcdf.org/gifsicle/))
+* jififremove ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/jijifremove), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/jpeg-9.zip))
+* jpegtran ([source](http://www.ijg.org/files/jpegsrc.v9a.tar.gz), [homepage](http://jpegclub.org/jpegtran/))
+* optipng ([source](http://prdownloads.sourceforge.net/optipng/optipng-0.7.5.tar.gz?download), [homepage](http://optipng.sourceforge.net/))
+* pngout ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/pngout), [source](http://www.jonof.id.au/kenutils), [homepage](http://advsys.net/ken/utils.htm))
+
+The JAVA code calls out to these binaries and using the appropriate ones for the image format.  The code does this twice.  For some reason passing in an already optimized image will result in a few bytes reduction the second time it is optimized.
+
+For converting the images we use 3 binaries:
+* ImageMagick ([binary](http://www.imagemagick.org/script/binary-releases.php), [homepage](http://www.imagemagick.org/))
+* cwebp ([binary](http://downloads.webmproject.org/releases/webp/index.html), [homepage](https://developers.google.com/speed/webp/docs/cwebp))
+* gif2webp ([binary](http://downloads.webmproject.org/releases/webp/index.html), [homepage](https://developers.google.com/speed/webp/docs/gif2webp))
+
 ## Usage ##
 
 Before starting there are a few pre-requisites
@@ -42,23 +60,6 @@ The main API is `ImageOptimizationService.optimizeAllImages`.
 * The 3rd argument is the collection of image files to optimize.
 
 The function returns a list of `OptimizationResult` objects.
-
-### How is the Optimization Actually Accomplished? ###
-
-The heavy lifing is done by 6 different binary applications:
-* advpng ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/advpng), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/advancecomp-1.17.zip), [homepage](http://advancemame.sourceforge.net/doc-advpng.html))
-* gifsicle ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/gifsicle), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/gifsicle-1.67.zip), [homepage](http://www.lcdf.org/gifsicle/))
-* jififremove ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/jijifremove), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/jpeg-9.zip))
-* jpegtran ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/jpegtran), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/jpeg-9.zip), [homepage](http://jpegclub.org/jpegtran/))
-* optipng ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/optipng), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/optipng-0.7.4.zip), [homepage](http://optipng.sourceforge.net/))
-* pngout ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/pngout), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/pngout-20130221-linux.zip), [homepage](http://advsys.net/ken/utils.htm))
-
-The JAVA code calls out to these binaries and using the appropriate ones for the image format.  The code does this twice.  For some reason passing in an already optimized image will result in a few bytes reduction the second time it is optimized.
-
-For converting the images we use 3 binaries:
-* ImageMagick ([source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/ImageMagick-6.8.7-10.zip), [homepage](http://www.imagemagick.org/))
-* cwebp ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/advpng), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/libwebp-0.3.1-linux-x86-32.zip), [homepage](https://developers.google.com/speed/webp/docs/cwebp))
-* gif2webp ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/advpng), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/libwebp-0.3.1-linux-x86-32.zip), [homepage](https://developers.google.com/speed/webp/docs/gif2webp))
 
 ### Automated Validation ###
 
