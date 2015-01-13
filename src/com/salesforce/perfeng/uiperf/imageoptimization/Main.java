@@ -30,6 +30,8 @@ package com.salesforce.perfeng.uiperf.imageoptimization;
 import static com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.GIF_EXTENSION;
 import static com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.GIF_MIME_TYPE;
 import static com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.JPEG_EXTENSION;
+import static com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.JPEG_EXTENSION2;
+import static com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.JPEG_EXTENSION3;
 import static com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.JPEG_MIME_TYPE;
 import static com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.PNG_EXTENSION;
 import static com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.PNG_MIME_TYPE;
@@ -46,9 +48,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.http.annotation.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +68,7 @@ import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageFileOptimizati
  * 
  * @author eperret (Eric Perret)
  */
+@Immutable
 public class Main {
 
 	/**
@@ -94,8 +99,9 @@ public class Main {
 	 *                                         images.
 	 * @throws IOException Can be thrown by the {@link ImageOptimizationService}
 	 *                     when interacting with the passed in files.
+	 * @throws TimeoutException Thrown if it takes to long to optimize an image.
 	 */
-	public static void main(final String[] args) throws ImageFileOptimizationException, IOException {
+	public static void main(final String[] args) throws ImageFileOptimizationException, IOException, TimeoutException {
 		
 		if(args.length == 0) {
 			logger.warn("Missing main method arguments. No files to optimize.");
@@ -115,7 +121,7 @@ public class Main {
 			}
 		}
 		
-		final IImageOptimizationService<Void> service = ImageOptimizationService.createInstance(IMAGE_OPTIMIZATION_BINARY_LOCATION);
+		final IImageOptimizationService<Void> service = ImageOptimizationService.createInstance(IMAGE_OPTIMIZATION_BINARY_LOCATION, 0);
 		final List<OptimizationResult<Void>> list = service.optimizeAllImages(FileTypeConversion.ALL, false, imagesToOptimize);
 		System.out.println(list);
 		System.out.println("Images can be downloaded from: " + service.getFinalResultsDirectory());
@@ -136,7 +142,7 @@ public class Main {
 		if(GIF_EXTENSION.equals(extension)) {
 			return GIF_MIME_TYPE.equals(contentType);
 		}
-		if(JPEG_EXTENSION.equals(extension)) {
+		if(JPEG_EXTENSION.equals(extension) || JPEG_EXTENSION2.equals(extension) || JPEG_EXTENSION3.equals(extension)) {
 			return JPEG_MIME_TYPE.equals(contentType);
 		}
 		return false;

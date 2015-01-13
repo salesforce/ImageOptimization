@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 
 /**
  * Copied from the 2.4 version of {@link FileUtils}. 
@@ -30,7 +29,8 @@ public class FixedFileUtils {
     private static final long FILE_COPY_BUFFER_SIZE = FileUtils.ONE_MB * 30;
 	
     /**
-     * Internal copy file method.
+     * Internal copy file method. Modified by eperret (Eric Perret) from the 
+     * original code to use try with resources.
      * 
      * @param srcFile  the validated source file, must not be {@code null}
      * @param destFile  the validated destination file, must not be {@code null}
@@ -42,15 +42,10 @@ public class FixedFileUtils {
             throw new IOException("Destination '" + destFile + "' exists but is a directory");
         }
 
-        FileInputStream fis = null;
-        FileOutputStream fos = null;
-        FileChannel input = null;
-        FileChannel output = null;
-        try {
-            fis = new FileInputStream(srcFile);
-            fos = new FileOutputStream(destFile);
-            input  = fis.getChannel();
-            output = fos.getChannel();
+        try(final FileInputStream fis = new FileInputStream(srcFile);
+        	final FileOutputStream fos = new FileOutputStream(destFile);
+        	final FileChannel input = fis.getChannel();
+        	final  FileChannel output = fos.getChannel()) {
             long size = input.size();
             long pos = 0;
             long count = 0;
@@ -58,11 +53,6 @@ public class FixedFileUtils {
                 count = size - pos > FILE_COPY_BUFFER_SIZE ? FILE_COPY_BUFFER_SIZE : size - pos;
                 pos += output.transferFrom(input, pos, count);
             }
-        } finally {
-            IOUtils.closeQuietly(output);
-            IOUtils.closeQuietly(fos);
-            IOUtils.closeQuietly(input);
-            IOUtils.closeQuietly(fis);
         }
 
         if (srcFile.length() != destFile.length()) {

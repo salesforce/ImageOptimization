@@ -30,6 +30,7 @@ package com.salesforce.perfeng.uiperf.imageoptimization.service;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import com.salesforce.perfeng.uiperf.imageoptimization.dto.OptimizationResult;
 import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageFileOptimizationException;
@@ -52,9 +53,17 @@ public interface IImageOptimizationService<C> {
 	 */
 	public final static String PNG_MIME_TYPE = "image/png";
 	/**
-	 * The JPEG extension.
+	 * The JPEG extension {@value #JPEG_EXTENSION}.
 	 */
 	public final static String JPEG_EXTENSION = "jpg";
+	/**
+	 * The JPEG extension {@value #JPEG_EXTENSION2}.
+	 */
+	public final static String JPEG_EXTENSION2 = "jpeg";
+	/**
+	 * The JPEG extension {@value #JPEG_EXTENSION3}.
+	 */
+	public final static String JPEG_EXTENSION3 = "jpe";
 	/**
 	 * The JPEG mime type.
 	 */
@@ -120,7 +129,7 @@ public interface IImageOptimizationService<C> {
 	 * The complete list of supported file extensions that the service will 
 	 * optimize.
 	 */
-	public final static String[] SUPPORTED_FILE_EXTENSIONS = {PNG_EXTENSION, JPEG_EXTENSION, GIF_EXTENSION, PNG_EXTENSION.toUpperCase(), JPEG_EXTENSION.toUpperCase(), GIF_EXTENSION.toUpperCase()};
+	public final static String[] SUPPORTED_FILE_EXTENSIONS = {PNG_EXTENSION, JPEG_EXTENSION, GIF_EXTENSION, JPEG_EXTENSION2, JPEG_EXTENSION3, PNG_EXTENSION.toUpperCase(), JPEG_EXTENSION.toUpperCase(), GIF_EXTENSION.toUpperCase(), JPEG_EXTENSION2.toUpperCase(), JPEG_EXTENSION3.toUpperCase()};
 
 	/**
 	 * This method will try to optimize all of the passed in images.
@@ -135,9 +144,10 @@ public interface IImageOptimizationService<C> {
 	 *         images that could not be optimized to a smaller size.
 	 * @throws ImageFileOptimizationException Thrown if there is a problem 
 	 *                                        optimizing an image.
+	 * @throws TimeoutException Happens if an image took to long to optimize.
 	 * @see #optimizeAllImages(FileTypeConversion, boolean, File...)
 	 */
-	public List<OptimizationResult<C>> optimizeAllImages(final FileTypeConversion conversionType, final boolean includeWebPConversion, final Collection<File> files) throws ImageFileOptimizationException;
+	public List<OptimizationResult<C>> optimizeAllImages(final FileTypeConversion conversionType, final boolean includeWebPConversion, final Collection<File> files) throws ImageFileOptimizationException, TimeoutException;
 	
 	/**
 	 * This method will try to optimize all of the passed in images.
@@ -152,9 +162,10 @@ public interface IImageOptimizationService<C> {
 	 *         images that could not be optimized to a smaller size.
 	 * @throws ImageFileOptimizationException Thrown if there is a problem 
 	 *                                        optimizing an image.
+	 * @throws TimeoutException Thrown if it takes to long to optimize an image.
 	 * @see #optimizeAllImages(FileTypeConversion, boolean, Collection)
 	 */
-	public List<OptimizationResult<C>> optimizeAllImages(final FileTypeConversion conversionType, final boolean includeWebPConversion, final File... files) throws ImageFileOptimizationException;
+	public List<OptimizationResult<C>> optimizeAllImages(final FileTypeConversion conversionType, final boolean includeWebPConversion, final File... files) throws ImageFileOptimizationException, TimeoutException;
 	
 	/**
 	 * Returns the path to the optimized images.

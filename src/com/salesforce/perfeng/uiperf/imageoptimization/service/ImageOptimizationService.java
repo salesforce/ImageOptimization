@@ -31,6 +31,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,13 +46,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.annotation.Immutable;
+import org.apache.http.annotation.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,13 +74,14 @@ import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageUtils;
  * @since 186.internal
  * @param <C> Contains the changeList information.
  */
+@Immutable
+@ThreadSafe
 public class ImageOptimizationService<C> implements IImageOptimizationService<C> {
 
 	/**
 	 * Log4j2 logger for this class and inner classes.
 	 */
 	final static Logger logger = LoggerFactory.getLogger(ImageOptimizationService.class);
-	
 	
 	/**
 	 * Internal error message used when an error occurred while optimizing a GIF
@@ -125,7 +133,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	 * Name of the {@value #JPEGTRAN_BINARY} binary application used to optimize 
 	 * a {@value IImageOptimizationService#JPEG_MIME_TYPE} file. On linux this 
 	 * app requires libjpeg62 to be installed. Run 
-	 * "sudo apt-get install libjpeg62".
+	 * "sudo apt-get install libjpeg62:i386".
 	 */
 	protected static final String JPEGTRAN_BINARY  = "jpegtran";
 	/**
@@ -148,6 +156,11 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	 * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
 	 */
 	protected static final String PNGOUT_BINARY    = "pngout";
+	/**
+	 * Name of the {@value #PNGQUANT_BINARY} binary application used to optimize 
+	 * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
+	 */
+	protected static final String PNGQUANT_BINARY    = "pngquant";
 	
 	/**
 	 * Path of the "cwebp" binary application used to convert a 
@@ -191,6 +204,11 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	 * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
 	 */
 	protected final String pngoutBinaryPath;
+	/**
+	 * Path of the {@value #PNGQUANT_BINARY} binary application used to optimize 
+	 * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
+	 */
+	protected final String pngquantBinaryPath;
 	
 	private final int MAX_NUMBER_OF_THREADS = Runtime.getRuntime().availableProcessors();
 
@@ -211,18 +229,26 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
 	private final File tmpWorkingDirectory;
 	private final String finalWorkingDirectoryPath;
+	private final int timeoutInSeconds;
 
 	/**
-	 * Constructor that sets the working directories and root directories.
+	 * Constructor that sets the working directories and root directories. The
+	 * {@code timeoutInSeconds} parameter indicates the timeout for any of the 
+	 * optimization processes.
 	 * 
 	 * @param tmpWorkingDirectory This is the temp directory where all of the 
 	 *                            images will be optimized from and stored 
 	 *                            before they are checked back into P4.
 	 * @param binaryDirectory The location the binary image compression programs
 	 *                        are located.
+	 * @param timeoutInSeconds The timeout for execing an image optimization
+	 *                         process. If the value is 0 or a negative number 
+	 *                         then there will be no timeout
 	 * @throws IOException Thrown when interacting with the tmpWorkingDirectory
+	 * @see #ImageOptimizationService(File, File)
+	 * @see #ImageOptimizationService(File, File, String)
 	 */
-	public ImageOptimizationService(final File tmpWorkingDirectory, final File binaryDirectory) throws IOException {
+	public ImageOptimizationService(final File tmpWorkingDirectory, final File binaryDirectory, final int timeoutInSeconds) throws IOException {
 		if(tmpWorkingDirectory == null) {
 			throw new IllegalArgumentException("The passed in tmpWorkingDirectory needs to exist.");
 		}else if(binaryDirectory == null) {
@@ -236,18 +262,59 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
 		finalWorkingDirectoryPath = new StringBuilder(tmpWorkingDirectory.getCanonicalPath()).append(File.separatorChar).append("final").toString();
 		
+		this.timeoutInSeconds = timeoutInSeconds;
+		
 		final String binaryDirectoryPath = binaryDirectory.getAbsolutePath() + File.separator;
 		
-		cwebpBinaryPath      = binaryDirectoryPath + "cwebp";
-		gif2webpBinaryPath   = binaryDirectoryPath + "gif2webp";
-		gifsicleBinaryPath   = binaryDirectoryPath + "gifsicle";
-		jpegtranBinaryPath   = binaryDirectoryPath + "jpegtran";
-		// Needs to be escaped because it is passed as an argument to the bash 
+		cwebpBinaryPath      = binaryDirectoryPath + CWEBP_BINARY;
+		gif2webpBinaryPath   = binaryDirectoryPath + GIF2WEBP_BINARY;
+		gifsicleBinaryPath   = binaryDirectoryPath + GIFSICLE_BINARY;
+		jpegtranBinaryPath   = binaryDirectoryPath + JPEGTRAN_BINARY;
+		// Needs to be quoted because it is passed as an argument to the bash 
 		// command.
-		jfifremoveBinaryPath = "\"" + binaryDirectoryPath + "jfifremove" + "\"";
-		advpngBinaryPath     = binaryDirectoryPath + "advpng";
-		optipngBinaryPath    = binaryDirectoryPath + "optipng";
-		pngoutBinaryPath     = binaryDirectoryPath + "pngout";
+		jfifremoveBinaryPath = '\"' + binaryDirectoryPath + JFIFREMOVE_BINARY + '\"';
+		advpngBinaryPath     = binaryDirectoryPath + ADVPNG_BINARY;
+		optipngBinaryPath    = binaryDirectoryPath + OPTIPNG_BINARY;
+		pngoutBinaryPath     = binaryDirectoryPath + PNGOUT_BINARY;
+		pngquantBinaryPath   = binaryDirectoryPath + PNGQUANT_BINARY;
+	}
+	
+	/**
+	 * Constructor that sets the working directories and root directories. The
+	 * {@code timeoutInSeconds} parameter indicates the timeout for any of the 
+	 * optimization processes.
+	 * 
+	 * @param tmpWorkingDirectory This is the temp directory where all of the 
+	 *                            images will be optimized from and stored 
+	 *                            before they are checked back into P4.
+	 * @param binaryDirectory The location the binary image compression programs
+	 *                        are located.
+	 * @param timeoutInSeconds The timeout for execing an image optimization
+	 *                         process. If the value is 0 or a negative number 
+	 *                         then there will be no timeout
+	 * @throws IOException Thrown when interacting with the tmpWorkingDirectory
+	 * @see #ImageOptimizationService(File, File, int)
+	 * @see #ImageOptimizationService(File, File)
+	 */
+	public ImageOptimizationService(final File tmpWorkingDirectory, final File binaryDirectory, final String timeoutInSeconds) throws IOException {
+		this(tmpWorkingDirectory, binaryDirectory, Integer.parseInt(timeoutInSeconds));
+	}
+	
+	/**
+	 * Constructor that sets the working directories and root directories. There
+	 * is no timeout for any of the optimization processes.
+	 * 
+	 * @param tmpWorkingDirectory This is the temp directory where all of the 
+	 *                            images will be optimized from and stored 
+	 *                            before they are checked back into P4.
+	 * @param binaryDirectory The location the binary image compression programs
+	 *                        are located.
+	 * @throws IOException Thrown when interacting with the tmpWorkingDirectory
+	 * @see #ImageOptimizationService(File, File, int)
+	 * @see #ImageOptimizationService(File, File, String)
+	 */
+	public ImageOptimizationService(final File tmpWorkingDirectory, final File binaryDirectory) throws IOException {
+		this(tmpWorkingDirectory, binaryDirectory, 0);
 	}
 
 	/**
@@ -262,11 +329,15 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	 *                                                          location. It can
 	 *                                                          be relative or 
 	 *                                                          absolute.
+	 * @param timeoutInSeconds The timeout for execing an image optimization
+	 *                         process. If the value is 0 or a negative number 
+	 *                         then there will be no timeout
 	 * @param <C> Holds the changelist information.
 	 * @return An instance of this class.
 	 * @throws IOException Thrown when creating the tmp working directory
+	 * @see ImageOptimizationService#ImageOptimizationService(File, File, int)
 	 */
-	public final static <C> ImageOptimizationService<C> createInstance(final String pathToBinaryProgramsForImageOptimizationDirectory) throws IOException {
+	public final static <C> ImageOptimizationService<C> createInstance(final String pathToBinaryProgramsForImageOptimizationDirectory, final int timeoutInSeconds) throws IOException {
 		if(logger.isDebugEnabled()) {
 			logger.debug("Current local directory is: {}", new File(".").getCanonicalPath());
 		}
@@ -274,7 +345,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		final File tmpDir = File.createTempFile(ImageOptimizationService.class.getName(), "");
 		tmpDir.delete();
 		tmpDir.mkdir();
-		return new ImageOptimizationService<>(tmpDir, new File(pathToBinaryProgramsForImageOptimizationDirectory).getCanonicalFile());
+		return new ImageOptimizationService<>(tmpDir, new File(pathToBinaryProgramsForImageOptimizationDirectory).getCanonicalFile(), timeoutInSeconds);
 	}
 
 	/**
@@ -327,44 +398,57 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	 *                       type to another.
 	 * @param tmpImageWorkingDirectory the working directory for optimizing the 
 	 *                                 files.
-	 * @return the number of tasks submitted.
+	 * @return The list of {@link Future} for each optimization process.
 	 * @throws ImageFileOptimizationException Thrown if an error occurs.
 	 */
-	private final int submitExecuteOptimization(final CompletionService<OptimizationResult<C>> completionService, final File file, final StringBuilder tmpImageWorkingDirectory, final FileTypeConversion conversionType, final boolean includeWebPConversion) throws ImageFileOptimizationException {
+	private final List<Future<OptimizationResult<C>>> submitExecuteOptimization(final CompletionService<OptimizationResult<C>> completionService, final File file, final StringBuilder tmpImageWorkingDirectory, final FileTypeConversion conversionType, final boolean includeWebPConversion) throws ImageFileOptimizationException {
 		try {
 			final String ext = FilenameUtils.getExtension(file.getName()).toLowerCase();
+			
+			final List<Future<OptimizationResult<C>>> futures = new ArrayList<>(2);
+			
 			if(PNG_EXTENSION.equals(ext)) {
-				completionService.submit(new ExecutePngOptimization(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getCanonicalPath()).toString()), conversionType));
+				futures.add(completionService.submit(new ExecutePngOptimization(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getCanonicalPath()).toString()), conversionType)));
 				if(includeWebPConversion) {
-					completionService.submit(new ExecuteWebpConversion(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(IImageOptimizationService.WEBP_EXTENSION).append(file.getCanonicalPath()).toString()), false));
-					return 2;
+					futures.add(completionService.submit(new ExecuteWebpConversion(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(IImageOptimizationService.WEBP_EXTENSION).append(file.getCanonicalPath()).toString()), false)));
 				}
 			} else if(GIF_EXTENSION.equals(ext)) {
-				completionService.submit(new ExecuteGifOptimization(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getCanonicalPath()).toString()), conversionType));
+				futures.add(completionService.submit(new ExecuteGifOptimization(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getCanonicalPath()).toString()), conversionType)));
 				if(includeWebPConversion) {
-					completionService.submit(new ExecuteWebpConversion(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(IImageOptimizationService.WEBP_EXTENSION).append(file.getCanonicalPath()).toString()), true));
-					return 2;
+					futures.add(completionService.submit(new ExecuteWebpConversion(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(IImageOptimizationService.WEBP_EXTENSION).append(file.getCanonicalPath()).toString()), true)));
 				}
-			} else if(JPEG_EXTENSION.equals(ext)) {
-				completionService.submit(new ExecuteJpegOptimization(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getCanonicalPath()).toString()), conversionType));
+			} else if(JPEG_EXTENSION.equals(ext) || JPEG_EXTENSION2.equals(ext) || JPEG_EXTENSION3.equals(ext)) {
+				futures.add(completionService.submit(new ExecuteJpegOptimization(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getCanonicalPath()).toString()), conversionType)));
 			} else {
 				throw new IllegalArgumentException("The passed in file has an unsupported file extension.");
 			}
-			return 1;
+			return futures;
 		} catch (final Exception e) {
 			throw ImageFileOptimizationException.getInstance(file, e);
 		}
 	}
 
-	private final static <C> List<OptimizationResult<C>> optimizeGroupOfImages(final CompletionService<OptimizationResult<C>> completionService, final long numberOfThreads) {
+	private final List<OptimizationResult<C>> optimizeGroupOfImages(final CompletionService<OptimizationResult<C>> completionService, final List<Future<OptimizationResult<C>>> futures) throws TimeoutException {
 
 		OptimizationResult<C> optimizationResult;
 
 		final List<OptimizationResult<C>> masterListOfOptimizedFiles = new ArrayList<>();
-
+		final int numberOfThreads = futures.size();
+		
 		for(int i = 0; i < numberOfThreads; i++) {
 			try {
-				optimizationResult = completionService.take().get();
+				if(this.timeoutInSeconds > 0) {
+					 final Future<OptimizationResult<C>> f = completionService.poll(this.timeoutInSeconds, TimeUnit.SECONDS);
+					 if(f == null) {
+						 for(final Future<OptimizationResult<C>> future : futures) {
+							 future.cancel(true);
+						 }
+						 throw new TimeoutException("Timed out waiting for image to optimize.");
+					 }
+					 optimizationResult = f.get();
+				} else {
+					optimizationResult = completionService.take().get();
+				}
 				if(optimizationResult != null) {
 					logger.info(optimizationResult.toString());
 					masterListOfOptimizedFiles.add(optimizationResult);
@@ -386,7 +470,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 				IOUtils.copy(is, writer);
 				final StringBuilder errorMessage = new StringBuilder("Optimization failed with edit code: ").append(ps.exitValue()).append(". ").append(writer);
 				if(ps.exitValue() == 127 /* command not found */) {
-					throw new ThirdPartyBinaryNotFoundException(binaryApplicationName, "Most likely this is due to required libraries not being installed on the OS. On Ubuntu run \"sudo apt-get install libjpeg62\".", new RuntimeException(errorMessage.toString()));
+					throw new ThirdPartyBinaryNotFoundException(binaryApplicationName, "Most likely this is due to required libraries not being installed on the OS. On Ubuntu run \"sudo apt-get install libjpeg62:i386\".", new RuntimeException(errorMessage.toString()));
 				}
 				throw ImageFileOptimizationException.getInstance(originalFile, new RuntimeException(errorMessage.toString()));
 			} catch (final IOException ioe) {
@@ -417,11 +501,13 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	 *         images that could not be optimized to a smaller size.
 	 * @throws ImageFileOptimizationException If there are any issues optimizing
 	 *                                        an image.
+	 * @throws TimeoutException Happens if it takes to long to optimize an 
+	 *                          image.
 	 * @see #optimizeAllImages(com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.FileTypeConversion, boolean, File...)
 	 * @see com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService#optimizeAllImages(FileTypeConversion, boolean, Collection)
 	 */
 	@Override
-	public List<OptimizationResult<C>> optimizeAllImages(final FileTypeConversion conversionType, final boolean includeWebPConversion, final Collection<File> files) throws ImageFileOptimizationException {
+	public List<OptimizationResult<C>> optimizeAllImages(final FileTypeConversion conversionType, final boolean includeWebPConversion, final Collection<File> files) throws ImageFileOptimizationException, TimeoutException {
 		if((files == null) || files.isEmpty()) {
 			return Collections.emptyList();
 		}
@@ -429,13 +515,16 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		final CompletionService<OptimizationResult<C>> completionService = new ExecutorCompletionService<>(executorService);
 
 		int i = 0;
-		int numberOfSubmittedImages = 0;
 		final Date start = new Date();
 		final long time = System.nanoTime();
+		
+		final ArrayList<Future<OptimizationResult<C>>> futures = new ArrayList<>();
 		for(final File file : files) {
-			numberOfSubmittedImages += submitExecuteOptimization(completionService, file, new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar).append("scratch").append(time).append(i++), conversionType, includeWebPConversion);
+			futures.addAll(submitExecuteOptimization(completionService, file, new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar).append("scratch").append(time).append(i++), conversionType, includeWebPConversion));
 		}
-		final List<OptimizationResult<C>> optimizedFiles = optimizeGroupOfImages(completionService, numberOfSubmittedImages);
+		futures.trimToSize();
+		
+		final List<OptimizationResult<C>> optimizedFiles = optimizeGroupOfImages(completionService, futures);
 		logger.info("Image optimization elapsed time: " + (new Date().getTime() - start.getTime()));
 
 		return optimizedFiles;
@@ -456,12 +545,22 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	 *         images that could not be optimized to a smaller size.
 	 * @throws ImageFileOptimizationException If there are any issues optimizing
 	 *                                        an image.
+	 * @throws TimeoutException Thrown if it takes to long to optimize an image.
 	 * @see #optimizeAllImages(com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.FileTypeConversion, boolean, Collection)
 	 * @see com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService#optimizeAllImages(com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.FileTypeConversion, boolean, java.io.File[])
 	 */
 	@Override
-	public List<OptimizationResult<C>> optimizeAllImages(final FileTypeConversion conversionType, final boolean includeWebPConversion, final File... files) throws ImageFileOptimizationException {
+	public List<OptimizationResult<C>> optimizeAllImages(final FileTypeConversion conversionType, final boolean includeWebPConversion, final File... files) throws ImageFileOptimizationException, TimeoutException {
 		return optimizeAllImages(conversionType, includeWebPConversion, new HashSet<>(Arrays.asList(files)));
+	}
+	
+	private static final int waitFor(final Process ps) throws InterruptedException {
+		try {
+			return ps.waitFor();
+		} catch(final InterruptedException ie) {
+			ps.destroy();
+			throw ie;
+		}
 	}
 
 	/**
@@ -485,7 +584,9 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		} catch(final IOException ioe) {
 			throw new ThirdPartyBinaryNotFoundException(ADVPNG_BINARY, ioe);
 		}
-		ps.waitFor();
+		
+		waitFor(ps);
+		
 		if(ps.exitValue() != 0) {
 			handleOptimizationFailure(ps, ADVPNG_BINARY, workingFile);
 		}
@@ -517,7 +618,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 			throw new ThirdPartyBinaryNotFoundException(PNGOUT_BINARY, ioe);
 		}
 
-		ps.waitFor();
+		waitFor(ps);
 		if(ps.exitValue() != 0 && ps.exitValue() != 2) {
 			handleOptimizationFailure(ps, PNGOUT_BINARY, workingFile);
 		} else {
@@ -527,6 +628,59 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 				if(!newFile.renameTo(workingFile)) {
 					logger.warn("Optimization failed to copy file. Moving on with the test.", ImageFileOptimizationException.getInstance(workingFile, "Optimization failed to copy file. Moving on with the test."));
 				}
+			}
+		}
+		return workingFile;
+	}
+	
+	/**
+	 * Executes the binary {@value #PNGQUANT_BINARY} to optimize the input file.
+	 * 
+	 * @param workingFile The file to optimize
+	 * @param workingFilePath The path to the file to optimize
+	 * @return the optimized file
+	 * @throws InterruptedException If the optimization was interrupted.
+	 * @throws ThirdPartyBinaryNotFoundException Thrown if the 
+	 *                                           {@value #PNGQUANT_BINARY}
+	 *                                           application does not exist.
+	 */
+	final File executePngquant(final File workingFile, final String workingFilePath) throws InterruptedException, ThirdPartyBinaryNotFoundException {
+		
+		final Process ps;
+		try {
+			// Slightly different from the other binary calls because PNG out 
+			// displays an error when long file paths are used.
+			final ProcessBuilder pb = new ProcessBuilder(pngquantBinaryPath, "--quality=100-100", "-s1", "--ext", ".png2", "--force", "--", workingFile.getName());
+			pb.directory(workingFile.getParentFile());
+			pb.redirectErrorStream(true);
+			ps = pb.start();
+		} catch(final IOException ioe) {
+			throw new ThirdPartyBinaryNotFoundException(PNGQUANT_BINARY, ioe);
+		}
+		
+		waitFor(ps);
+		
+		// If conversion results in quality below the min quality the image 
+		// won't be saved and pngquant will exit with status code 99.
+		if(ps.exitValue() != 99) {
+			if(ps.exitValue() != 0) {
+				handleOptimizationFailure(ps, PNGQUANT_BINARY, workingFile);
+			}
+			final File newFile;
+			if(IImageOptimizationService.PNG_EXTENSION.equalsIgnoreCase(FilenameUtils.getExtension(workingFile.getName()))) {
+				newFile = new File(workingFilePath + '2');
+			} else {
+				newFile = new File(workingFilePath + ".png2");
+			}
+			
+			if(workingFile.length() > newFile.length()) {
+				try {
+					Files.move(newFile.toPath(), workingFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				} catch (final IOException ioe) {
+					throw ImageFileOptimizationException.getInstance(workingFile, "Optimization failed to copy file.", ioe);
+				}
+			} else {
+				newFile.delete();
 			}
 		}
 		return workingFile;
@@ -553,7 +707,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		} catch(final IOException ioe) {
 			throw new ThirdPartyBinaryNotFoundException(OPTIPNG_BINARY, ioe);
 		}
-		if(ps.waitFor() != 0) {
+		if(waitFor(ps) != 0) {
 			handleOptimizationFailure(ps, OPTIPNG_BINARY, workingFile);
 		}
 
@@ -582,7 +736,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 			throw new ThirdPartyBinaryNotFoundException(JPEGTRAN_BINARY, ioe);
 		}
 
-		if(ps.waitFor() == 0) {
+		if(waitFor(ps) == 0) {
 			final File tmpFile = new File(workingFilePath + ".tmp");
 			if(tmpFile.length() < workingFile.length()) {
 				return tmpFile;
@@ -618,7 +772,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 			throw new ThirdPartyBinaryNotFoundException(JFIFREMOVE_BINARY, ioe);
 		}
 
-		if(ps.waitFor() != 0) {
+		if(waitFor(ps) != 0) {
 			handleOptimizationFailure(ps, JFIFREMOVE_BINARY, workingFile);
 		}
 
@@ -647,7 +801,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 			throw new ThirdPartyBinaryNotFoundException(GIFSICLE_BINARY, ioe);
 		}
 
-		if(ps.waitFor() == 1) {
+		if(waitFor(ps) == 1) {
 			final File tmpFile = new File(workingFilePath + ".tmp");
 			if(tmpFile.exists()) {
 				return tmpFile;
@@ -685,7 +839,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		}
 
 		File webpFile = null;
-		if(ps.waitFor() == 0) {
+		if(waitFor(ps) == 0) {
 			webpFile = new File(webpFilePath);
 			if(webpFile.exists()) {
 				return webpFile;
@@ -724,7 +878,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		}
 
 		File webpFile = null;
-		if(ps.waitFor() == 0) {
+		if(waitFor(ps) == 0) {
 			webpFile = new File(webpFilePath);
 			if(webpFile.exists()) {
 				return webpFile;
@@ -806,7 +960,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		public File executeOptimization() throws IOException, InterruptedException {
 			final String path = workingFile.getCanonicalPath();
 			// FIXME Handle the ImageFileOptimizationException in one of the optimizations so it does not impact the other optimizations.
-			return executeOptipng(executePngout(executeAdvpng(executeOptipng(executePngout(executeAdvpng(workingFile, path), path), path), path), path), path);
+			return executePngquant(executeOptipng(executePngout(executeAdvpng(executePngquant(executeOptipng(executePngout(executeAdvpng(workingFile, path), path), path), path), path), path), path), path);
 		}
 	}
 
