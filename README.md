@@ -65,7 +65,7 @@ Calling the main method from the commandline with a list of files or folders.
 
     java -jar ImageOptimization-1.2.jar -DbinariesDirectory=<PATH_TO_BINARIES_DIRECTORY> path/to/image.png path/to/folder/of/images/
 
-The `<PATH_TO_BINARIES_DIRECTORY>` is the path where the binaries exist that are used to optimize the images. The binaries are currently in the [`lib/binary/linux/`](https://git.soma.salesforce.com/perfeng/ImageOptimization/tree/master/lib/binary/linux) directory
+The `<PATH_TO_BINARIES_DIRECTORY>` is the path where the binaries exist that are used to optimize the images. By default the code will look for the binaries in the `./lib/binary/linux/` directory
 
 You can also call this code programmatically from existing JAVA code by using the API, `com.salesforce.perfeng.uiperf.imageoptimization.service.ImageOptimizationService.optimizeAllImages(FileTypeConversion, boolean, Collection<File>)`.
 
@@ -88,7 +88,7 @@ The heavy lifing is done by 6 different binary applications: [advpng](http://adv
 
 The JAVA code calls out to these binaries and using the appropriate ones for the image format.  The code does this twice.  For some reason passing in an already optimized image will result in a few bytes reduction the second time it is optimized.
 
-For converting the images we use 3 binaries: [ImageMagick](http://www.imagemagick.org/), [cwebp](https://developers.google.com/speed/webp/docs/cwebp), [gif2webp](https://developers.google.com/speed/webp/docs/gif2webp).
+For converting the images we use 3 binaries: [ImageMagick](http://www.imagemagick.org/)), [cwebp](https://developers.google.com/speed/webp/docs/cwebp), [gif2webp](https://developers.google.com/speed/webp/docs/gif2webp).
 
 ### Automated Validation ###
 
