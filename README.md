@@ -12,7 +12,7 @@ ImageOptimization is a JAVA batch program / service used to optimize images by r
 
 Apart from optimizing an image, it also supports a few other things
 * Converting image types, GIFs to PNGs, if it will make the image smaller.
-* Create a Chrome specific verison, [WebP](https://developers.google.com/speed/webp/?csw=1)
+* Create a Chrome (browser) specific version, [WebP](https://developers.google.com/speed/webp/?csw=1)
 * Automated validation of images.
 
 ## Installation ##
@@ -95,6 +95,6 @@ For converting the images we use 3 binaries: [ImageMagick](http://www.imagemagic
 For each image generated, the code will perform a pixel by pixel comparison of the original and optimized image to take sure they are identical. It will indicate when there is an issue. This allows for a high level of confidence that the image has not visually changed.
 The way it works is
 
-1. It will take the original image, render it, and gather all of the pixels in an arry.
+1. It will take the original image, render it, and gather all of the pixels in an array.
 2. It does the same thing for the optimized image.
 3. Iterate over each array and compare the RGBA values of the pixel at spot `i`. If the pixels are identical, it passes. If the pixels are different and the alpha channel on both pixels is 100% transparent then the color does not matter and the pixels are considered identical. Any other difference will be considered a failure.
