@@ -89,7 +89,7 @@ The heavy lifing is done by 6 different binary applications: [advpng](http://adv
 
 The JAVA code calls out to these binaries and using the appropriate ones for the image format.  The code does this twice.  For some reason passing in an already optimized image will result in a few bytes reduction the second time it is optimized.
 
-For converting the images we use 3 binaries: [ImageMagick](http://www.imagemagick.org/)), [cwebp](https://developers.google.com/speed/webp/docs/cwebp), [gif2webp](https://developers.google.com/speed/webp/docs/gif2webp).
+For converting the images we use 3 binaries: [ImageMagick](http://www.imagemagick.org/), [cwebp](https://developers.google.com/speed/webp/docs/cwebp), [gif2webp](https://developers.google.com/speed/webp/docs/gif2webp).
 
 ### Automated Validation ###
 
