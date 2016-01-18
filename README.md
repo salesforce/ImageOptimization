@@ -37,6 +37,8 @@ _Note: This only works on Linux and has only been tested on Ubuntu.  There are a
   * jpegtran ([source](http://www.ijg.org/files/jpegsrc.v9b.tar.gz), [homepage](http://jpegclub.org/jpegtran/))
   * optipng ([source](http://prdownloads.sourceforge.net/optipng/optipng-0.7.5.tar.gz?download), [homepage](http://optipng.sourceforge.net/))
   * pngout ([source](http://www.jonof.id.au/kenutils), [homepage](http://advsys.net/ken/utils.htm))
+  * cwebp ([source](https://storage.googleapis.com/downloads.webmproject.org/releases/webp/index.html), [homepage](https://developers.google.com/speed/webp/docs/cwebp))
+  * gif2webp ([source](https://storage.googleapis.com/downloads.webmproject.org/releases/webp/index.html), [homepage](https://developers.google.com/speed/webp/docs/gif2webp))
 
 
 ### Additional Maven set up ###
@@ -82,20 +84,11 @@ The function returns a list of `OptimizationResult` objects.
 
 ### How is the Optimization Actually Accomplished? ###
 
-The heavy lifing is done by 6 different binary applications:
-* advpng ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/advpng), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/advancecomp-1.17.zip), [homepage](http://advancemame.sourceforge.net/doc-advpng.html))
-* gifsicle ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/gifsicle), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/gifsicle-1.67.zip), [homepage](http://www.lcdf.org/gifsicle/))
-* jfifremove ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/jijifremove), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/jpeg-9.zip))
-* jpegtran ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/jpegtran), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/jpeg-9.zip), [homepage](http://jpegclub.org/jpegtran/))
-* optipng ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/optipng), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/optipng-0.7.4.zip), [homepage](http://optipng.sourceforge.net/))
-* pngout ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/pngout), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/pngout-20130221-linux.zip), [homepage](http://advsys.net/ken/utils.htm))
+The heavy lifing is done by 6 different binary applications: [advpng](http://advancemame.sourceforge.net/doc-advpng.html), [gifsicle](http://www.lcdf.org/gifsicle/), [jfifremove](https://lyncd.com/files/imgopt/jfifremove.c), [jpegtran](http://jpegclub.org/jpegtran/), [optipng](http://optipng.sourceforge.net/), [pngout](http://advsys.net/ken/utils.htm).
 
 The JAVA code calls out to these binaries and using the appropriate ones for the image format.  The code does this twice.  For some reason passing in an already optimized image will result in a few bytes reduction the second time it is optimized.
 
-For converting the images we use 3 binaries:
-* ImageMagick ([source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/ImageMagick-6.8.7-10.zip), [homepage](http://www.imagemagick.org/))
-* cwebp ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/advpng), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/libwebp-0.3.1-linux-x86-32.zip), [homepage](https://developers.google.com/speed/webp/docs/cwebp))
-* gif2webp ([binary](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/binary/linux/advpng), [source](https://github.com/forcedotcom/ImageOptimization/blob/master/lib/libwebp-0.3.1-linux-x86-32.zip), [homepage](https://developers.google.com/speed/webp/docs/gif2webp))
+For converting the images we use 3 binaries: [ImageMagick](http://www.imagemagick.org/)), [cwebp](https://developers.google.com/speed/webp/docs/cwebp), [gif2webp](https://developers.google.com/speed/webp/docs/gif2webp).
 
 ### Automated Validation ###
 
