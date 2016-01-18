@@ -22,7 +22,6 @@ Apart from optimizing an image, it also supports a few other things
 * Some version of **Git**
   * If you are on the Mac, you should already have the command line version of git installed.
   * For other OSs or for the GUI version, they can be downloaded [here](http://git-scm.com/downloads).
->>>>>>> Updated to reference how to handle the dependancies
 * **JDK 8**
   * [download it from Oracle](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
 * ** [Apache Maven](http://maven.apache.org/download.cgi) 3.3** or later
