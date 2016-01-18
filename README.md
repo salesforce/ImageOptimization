@@ -24,7 +24,7 @@ Apart from optimizing an image, it also supports a few other things
   * For other OSs or for the GUI version, they can be downloaded [here](http://git-scm.com/downloads).
 * **JDK 8**
   * [download it from Oracle](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
-* ** [Apache Maven](http://maven.apache.org/download.cgi) 3.3** or later
+* **[Apache Maven](http://maven.apache.org/download.cgi) 3.3** or later
 
 A few binaries needed by the code have to be installed on the OS.
 
