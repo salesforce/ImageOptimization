@@ -12,7 +12,7 @@ ImageOptimization is a JAVA batch program / service used to optimize images by r
 
 Apart from optimizing an image, it also supports a few other things
 * Converting image types, GIFs to PNGs, if it will make the image smaller.
-* Create a Chrome specific verison, [WebP](https://developers.google.com/speed/webp/?csw=1)
+* Create a Chrome (browser) specific version, [WebP](https://developers.google.com/speed/webp/?csw=1)
 * Automated validation of images.
 
 ## Installation ##
@@ -20,11 +20,15 @@ Apart from optimizing an image, it also supports a few other things
 ### Prerequisites ###
 
 * Some version of **Git**
-    * If you are on the Mac, you should already have the command line version of git installed.
-    * For other OSs or for the GUI version, they can be downloaded [here](http://git-scm.com/downloads).
+  * If you are on the Mac, you should already have the command line version of git installed.
+  * For other OSs or for the GUI version, they can be downloaded [here](http://git-scm.com/downloads).
 * **JDK 8**
-    * [download it from Oracle](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
+  * [download it from Oracle](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
+<<<<<<< HEAD
+* ** [Apache Maven](http://maven.apache.org/download.cgi) 3.3** or later
+=======
 * **[Apache Maven](http://maven.apache.org/download.cgi) 3.3** or later
+>>>>>>> 189dc9c2105680bc3cf2302ff1ac0da1b2a452a7
 
 A few binaries needed by the code have to be installed on the OS.
 
@@ -39,6 +43,7 @@ _Note: This only works on Linux and has only been tested on Ubuntu.  There are a
   * pngout ([source](http://www.jonof.id.au/kenutils), [homepage](http://advsys.net/ken/utils.htm))
   * cwebp ([source](https://storage.googleapis.com/downloads.webmproject.org/releases/webp/index.html), [homepage](https://developers.google.com/speed/webp/docs/cwebp))
   * gif2webp ([source](https://storage.googleapis.com/downloads.webmproject.org/releases/webp/index.html), [homepage](https://developers.google.com/speed/webp/docs/gif2webp))
+  * pngquant ([source](https://github.com/pornel/pngquant), [homepage](https://pngquant.org/))
 
 
 ### Additional Maven set up ###
@@ -84,7 +89,7 @@ The function returns a list of `OptimizationResult` objects.
 
 ### How is the Optimization Actually Accomplished? ###
 
-The heavy lifing is done by 6 different binary applications: [advpng](http://advancemame.sourceforge.net/doc-advpng.html), [gifsicle](http://www.lcdf.org/gifsicle/), [jfifremove](https://lyncd.com/files/imgopt/jfifremove.c), [jpegtran](http://jpegclub.org/jpegtran/), [optipng](http://optipng.sourceforge.net/), [pngout](http://advsys.net/ken/utils.htm).
+The heavy lifing is done by 6 different binary applications: [advpng](http://advancemame.sourceforge.net/doc-advpng.html), [gifsicle](http://www.lcdf.org/gifsicle/), [jfifremove](https://lyncd.com/files/imgopt/jfifremove.c), [jpegtran](http://jpegclub.org/jpegtran/), [optipng](http://optipng.sourceforge.net/), [pngout](http://advsys.net/ken/utils.htm), [pngquant](https://pngquant.org/).
 
 The JAVA code calls out to these binaries and using the appropriate ones for the image format.  The code does this twice.  For some reason passing in an already optimized image will result in a few bytes reduction the second time it is optimized.
 
@@ -95,6 +100,6 @@ For converting the images we use 3 binaries: [ImageMagick](http://www.imagemagic
 For each image generated, the code will perform a pixel by pixel comparison of the original and optimized image to take sure they are identical. It will indicate when there is an issue. This allows for a high level of confidence that the image has not visually changed.
 The way it works is
 
-1. It will take the original image, render it, and gather all of the pixels in an arry.
+1. It will take the original image, render it, and gather all of the pixels in an array.
 2. It does the same thing for the optimized image.
 3. Iterate over each array and compare the RGBA values of the pixel at spot `i`. If the pixels are identical, it passes. If the pixels are different and the alpha channel on both pixels is 100% transparent then the color does not matter and the pixels are considered identical. Any other difference will be considered a failure.
