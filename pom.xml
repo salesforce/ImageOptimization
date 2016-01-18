@@ -8,9 +8,38 @@
   <packaging>jar</packaging>
 
   <name>ImageOptimization</name>
+  <url>https://github.com/SalesforceEng/ImageOptimization</url>
+
+  <organization>
+    <name>Salesforce</name>
+    <url>http://www.salesforce.com</url>
+  </organization>
+  <description>Library used to optimize images so that they are smaller in size (less bytes) while maintaining the exact same quality.
+It can also...
+1) convert gif to png
+2) convert images to webp
+
+Note: It only runs on Linux and requires additional binaries from https://github.com/forcedotcom/ImageOptimization/tree/master/lib/binary/linux</description>
+  <inceptionYear>2013</inceptionYear>
+  <scm>
+    <connection>scm:git:git://github.com/SalesforceEng/ImageOptimization</connection>
+    <developerConnection>scm:git:github.com/SalesforceEng/ImageOptimization</developerConnection>
+    <url>https://github.com/SalesforceEng/ImageOptimization</url>
+  </scm>
+
+  <developers>
+    <developer>
+      <id>eperret</id>
+      <name>Eric Perret</name>
+      <email>eperret@salesforce.com</email>
+    </developer>
+  </developers>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 
   <dependencies>
@@ -50,41 +79,18 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.1</version>
-        <executions>
-          <execution>
-            <id>default-testCompile</id>
-            <phase>test-compile</phase>
-            <goals>
-              <goal>testCompile</goal>
-            </goals>
-            <configuration>
-              <source>7</source>
-              <target>7</target>
-            </configuration>
-          </execution>
-          <execution>
-            <id>default-compile</id>
-            <phase>compile</phase>
-            <goals>
-              <goal>compile</goal>
-            </goals>
-            <configuration>
-              <source>7</source>
-              <target>7</target>
-            </configuration>
-          </execution>
-        </executions>
+        <version>3.3</version>
         <configuration>
-          <source>7</source>
-          <target>7</target>
+          <source>8</source>
+          <target>8</target>
         </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <version>2.2.1</version>
+        <version>2.4</version>
         <executions>
           <execution>
             <id>attach-sources</id>
@@ -100,20 +106,4 @@
     <outputDirectory>bin</outputDirectory>
     <testOutputDirectory>bin</testOutputDirectory>
   </build>
-  <organization>
-  	<name>salesforce.com, inc</name>
-  	<url>https://www.salesforce.com</url>
-  </organization>
-  <scm>
-  	<developerConnection>Eric Perret</developerConnection>
-  	<url>https://github.com/forcedotcom/ImageOptimization</url>
-  </scm>
-  <url>https://github.com/forcedotcom/ImageOptimization</url>
-  <description>Library used to optimize images so that they are smaller in size (less bytes) while maintaining the exact same quality.
-It can also...
-1) convert gif to png
-2) convert images to webp
-
-Note: It only runs on Linux and requires additional binaries from https://github.com/forcedotcom/ImageOptimization/tree/master/lib/binary/linux</description>
-  <inceptionYear>2013</inceptionYear>
 </project>
