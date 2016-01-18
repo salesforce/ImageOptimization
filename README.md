@@ -51,7 +51,7 @@ Maven 3.3.3+ is recommended.
 $ mvn --version
 
 Apache Maven 3.3.3 (r01de14724cdef164cd33c7c8c2fe155faf9602da; 2013-02-19 05:51:28-0800)
-Maven home: /Users/<user>/maven/apache-maven-3.0.5
+Maven home: /Users/_&lt;user&gt;_/maven/apache-maven-3.0.5
 Java version: 1.8.0_25, vendor: Oracle Corporation
 Java home: /Library/Java/JavaVirtualMachines/jdk1.8.0_25.jdk/Contents/Home/jre
 Default locale: en_US, platform encoding: UTF-8
