@@ -20,7 +20,6 @@ Apart from optimizing an image, it also supports a few other things
 ### Prerequisites ###
 
 * Some version of **Git**
-<<<<<<< HEAD
   * If you are on the Mac, you should already have the command line version of git installed.
   * For other OSs or for the GUI version, they can be downloaded [here](http://git-scm.com/downloads).
 * **JDK 8**
