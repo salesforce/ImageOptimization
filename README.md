@@ -39,6 +39,7 @@ _Note: This only works on Linux and has only been tested on Ubuntu.  There are a
   * pngout ([source](http://www.jonof.id.au/kenutils), [homepage](http://advsys.net/ken/utils.htm))
   * cwebp ([source](https://storage.googleapis.com/downloads.webmproject.org/releases/webp/index.html), [homepage](https://developers.google.com/speed/webp/docs/cwebp))
   * gif2webp ([source](https://storage.googleapis.com/downloads.webmproject.org/releases/webp/index.html), [homepage](https://developers.google.com/speed/webp/docs/gif2webp))
+  * pngquant ([source](https://github.com/pornel/pngquant), [homepage](https://pngquant.org/))
 
 
 ### Additional Maven set up ###
@@ -84,7 +85,7 @@ The function returns a list of `OptimizationResult` objects.
 
 ### How is the Optimization Actually Accomplished? ###
 
-The heavy lifing is done by 6 different binary applications: [advpng](http://advancemame.sourceforge.net/doc-advpng.html), [gifsicle](http://www.lcdf.org/gifsicle/), [jfifremove](https://lyncd.com/files/imgopt/jfifremove.c), [jpegtran](http://jpegclub.org/jpegtran/), [optipng](http://optipng.sourceforge.net/), [pngout](http://advsys.net/ken/utils.htm).
+The heavy lifing is done by 6 different binary applications: [advpng](http://advancemame.sourceforge.net/doc-advpng.html), [gifsicle](http://www.lcdf.org/gifsicle/), [jfifremove](https://lyncd.com/files/imgopt/jfifremove.c), [jpegtran](http://jpegclub.org/jpegtran/), [optipng](http://optipng.sourceforge.net/), [pngout](http://advsys.net/ken/utils.htm), [pngquant](https://pngquant.org/).
 
 The JAVA code calls out to these binaries and using the appropriate ones for the image format.  The code does this twice.  For some reason passing in an already optimized image will result in a few bytes reduction the second time it is optimized.
 
