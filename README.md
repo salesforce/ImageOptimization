@@ -65,7 +65,7 @@ Calling the main method from the commandline with a list of files or folders.
 
     java -jar ImageOptimization-1.2.jar -DbinariesDirectory=<PATH_TO_BINARIES_DIRECTORY> path/to/image.png path/to/folder/of/images/
 
-The `<PATH_TO_BINARIES_DIRECTORY>` is the path where the binaries exist that are used to optimize the images. The binaries are currently in the [`lib/binary/linux/`](https://git.soma.salesforce.com/perfeng/ImageOptimization/tree/master/lib/binary/linux) directory
+The `<PATH_TO_BINARIES_DIRECTORY>` is the path where the binaries exist that are used to optimize the images. By default the code will look for the binaries in the `./lib/binary/linux/` directory
 
 You can also call this code programmatically from existing JAVA code by using the API, `com.salesforce.perfeng.uiperf.imageoptimization.service.ImageOptimizationService.optimizeAllImages(FileTypeConversion, boolean, Collection<File>)`.
 
