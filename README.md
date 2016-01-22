@@ -1,6 +1,6 @@
 # ImageOptimization - Library for losslessly optimizing images #
 
-Copyright (c) 2014, Salesforce.com. All rights reserved.
+Copyright (c) 2016, Salesforce.com. All rights reserved.
 
 Created by <span itemscope="" itemtype="http://schema.org/Person">
 	<a itemprop="url" rel="author" href="https://github.com/eperret"><span itemprop="name">Eric Perret</span></a>
