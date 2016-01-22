@@ -28,7 +28,7 @@ Apart from optimizing an image, it also supports a few other things
 
 A few binaries needed by the code have to be installed on the OS.
 
-_Note: This only works on Linux and has only been tested on Ubuntu.  There are a number of non-java binaries that come with this project and they have I have only tried compiling them for for Linux, specifically Ubuntu._
+_Note: This only works on Linux and has only been tested on Ubuntu.  There are a number of non-java binaries that are required for this project and I have only tried compiling them for for Linux, specifically Ubuntu._
 * [ImageMagick](https://www.imagemagick.org/script/binary-releases.php) needs to be installed on the system (used for converting images because JAVA cannot handle certain file types).
 * The following binaries need to be compiled into the root of the project in the `<PROJECT_DIRECTORY>/lib/binary/linux` directory.
   * advpng ([source](https://github.com/amadvance/advancecomp/), [homepage](http://advancemame.sourceforge.net/doc-advpng.html))
