@@ -12,7 +12,7 @@
 
   <organization>
     <name>Salesforce</name>
-    <url>http://www.salesforce.com</url>
+    <url>https://www.salesforce.com</url>
   </organization>
   <description>Library used to optimize images so that they are smaller in size (less bytes) while maintaining the exact same quality.
 It can also...
