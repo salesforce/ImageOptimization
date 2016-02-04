@@ -26,6 +26,14 @@ Note: It only runs on Linux and requires additional binaries</description>
     <developerConnection>scm:git:github.com/SalesforceEng/ImageOptimization</developerConnection>
     <url>https://github.com/SalesforceEng/ImageOptimization</url>
   </scm>
+  
+  <licenses>
+    <license>
+      <name>The BSD 3-Clause License</name>
+      <url>http://opensource.org/licenses/BSD-3-Clause</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
 
   <developers>
     <developer>
