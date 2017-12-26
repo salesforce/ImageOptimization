@@ -3,7 +3,7 @@
 Copyright (c) 2017, Salesforce.com. All rights reserved.
 
 Created by <span itemscope="" itemtype="http://schema.org/Person">
-	<a itemprop="url" rel="author" href="https://github.com/eperret"><span itemprop="name">Eric Perret</span></a>
+    <a itemprop="url" rel="author" href="https://github.com/eperret"><span itemprop="name">Eric Perret</span></a>
 </span>
 
 ## Summary ##
@@ -55,7 +55,7 @@ Example:
     System.out.println(list);
 
 The main API is `ImageOptimizationService.optimizeAllImages`.
-* The 1st agument indicates if / how the image should be converted. There are currently 3 types of conversion. `FileTypeConversion.NONE`: None of the images will be converted to a different files type; `FileTypeConversion.ALL`: There are no restrictions around which images will be converted to different images types as long as it results in a smaller file size (less bytes) and optimization is lossless; `FileTypeConversion.IE6SAFE`: The same as `ALL` except that it will not convert the image if it is a GIF with Alpha transparency. PNG files with transparency, when loaded in IE6, show the transparent parts as gray.
+* The 1st argument indicates if / how the image should be converted. There are currently 3 types of conversion. `FileTypeConversion.NONE`: None of the images will be converted to a different files type; `FileTypeConversion.ALL`: There are no restrictions around which images will be converted to different images types as long as it results in a smaller file size (less bytes) and optimization is lossless; `FileTypeConversion.IE6SAFE`: The same as `ALL` except that it will not convert the image if it is a GIF with Alpha transparency. PNG files with transparency, when loaded in IE6, show the transparent parts as gray.
 * The 2nd argument indicates if browser specific versions of the file should be generated in addition to the optimized version of the image.
 * The 3rd argument is the collection of image files to optimize.
 
