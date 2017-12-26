@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, Salesforce.com, Inc.
+ * Copyright (c) 2017, Salesforce.com, Inc.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without 
@@ -102,7 +102,7 @@ public class ImageOptimizationServiceTest {
 	 *                     <code>ImageOptimizationService</code> constructor if 
 	 *                     its passed in file has an issue.
 	 */
-	@SuppressWarnings("unused")
+	@SuppressWarnings({ "unused", "static-method" })
 	@Test
 	public void testImageOptimizationService() throws IOException {
 		try {
@@ -145,7 +145,7 @@ public class ImageOptimizationServiceTest {
 	 *                     <code>ImageOptimizationService</code> constructor if 
 	 *                     its passed in file has an issue.
 	 */
-	@SuppressWarnings("unused")
+	@SuppressWarnings({ "unused", "static-method" })
 	@Test
 	public void testImageOptimizationService2() throws IOException {
 		try {
@@ -303,6 +303,7 @@ public class ImageOptimizationServiceTest {
 	 * @throws ImageFileOptimizationException Thrown if there is an error trying
 	 *                                        to optimize an image.
 	 */
+	@SuppressWarnings("static-method")
 	@Test
 	public void testOptimizeAllImagesALL() throws IOException, ImageFileOptimizationException, TimeoutException {
 		
@@ -405,6 +406,7 @@ public class ImageOptimizationServiceTest {
 	 * @throws ImageFileOptimizationException Thrown if there is an error trying
 	 *                                        to optimize an image.
 	 */
+	@SuppressWarnings("static-method")
 	@Test
 	public void testOptimizeAllImagesNONE() throws IOException, ImageFileOptimizationException, TimeoutException {
 		
@@ -507,6 +509,7 @@ public class ImageOptimizationServiceTest {
 	 * @throws ImageFileOptimizationException Thrown if there is an error trying
 	 *                                        to optimize an image.
 	 */
+	@SuppressWarnings("static-method")
 	@Test
 	public void testOptimizeAllImagesIE6SAFE() throws IOException, ImageFileOptimizationException, TimeoutException {
 		
@@ -610,6 +613,7 @@ public class ImageOptimizationServiceTest {
 	 *                                        to optimize an image.
 	 * @throws TimeoutException Thrown if optimizing an image timed out.
 	 */
+	@SuppressWarnings("static-method")
 	@Test
 	public void testOptimizeAllImagesNONEWithTimeoutFailure() throws IOException, ImageFileOptimizationException, TimeoutException {
 		
@@ -677,6 +681,7 @@ public class ImageOptimizationServiceTest {
 	 *                                        to optimize an image.
 	 * @throws TimeoutException Thrown if optimizing an image timed out.
 	 */
+	@SuppressWarnings("static-method")
 	@Test
 	public void testOptimizeAllImagesNONEWithTimeoutSuccess() throws IOException, ImageFileOptimizationException, TimeoutException {
 		
@@ -1214,6 +1219,7 @@ public class ImageOptimizationServiceTest {
 	 * 
 	 * @throws IOException Can be thrown when interacting with various files.
 	 */
+	@SuppressWarnings("static-method")
 	@Test
 	public void testGetFinalResultsDirectory() throws IOException {
 		final File tmpDir = getTempDir();

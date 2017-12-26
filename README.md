@@ -1,6 +1,6 @@
 # ImageOptimization - Library for losslessly optimizing images #
 
-Copyright (c) 2014, Salesforce.com. All rights reserved.
+Copyright (c) 2017, Salesforce.com. All rights reserved.
 
 Created by <span itemscope="" itemtype="http://schema.org/Person">
 	<a itemprop="url" rel="author" href="https://github.com/eperret"><span itemprop="name">Eric Perret</span></a>
@@ -12,12 +12,12 @@ ImageOptimization is a JAVA batch program / service used to optimize images by r
 
 Apart from optimizing an image, it also supports a few other things
 * Converting image types, GIFs to PNGs, if it will make the image smaller.
-* Create a Chrome specific verison, [WebP](https://developers.google.com/speed/webp/?csw=1)
+* Create a Chrome specific version, [WebP](https://developers.google.com/speed/webp/?csw=1)
 * Automated validation of images.
 
 ## Compilation ##
 
-Asside from using maven for compilation we also require a few binaries that need to be compiled.  Please download and compile these apps.
+Aside from using maven for compilation, we also require a few binaries that need to be compiled.  Please download and compile these apps.
 
 * advpng ([source](http://sourceforge.net/projects/advancemame/files/advancecomp/1.19/), [homepage](http://advancemame.sourceforge.net/doc-advpng.html))
 * gifsicle ([source](https://github.com/kohler/gifsicle), [homepage](http://www.lcdf.org/gifsicle/))

@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -56,8 +57,6 @@ import javax.imageio.ImageIO;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.annotation.Immutable;
-import org.apache.http.annotation.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,14 +67,12 @@ import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageFileOptimizati
 import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageUtils;
 
 /**
- * Service used to perform the optimization of images.
+ * Service used to perform the optimization of images. This class is Immutable and ThreadSafe.
  * 
  * @author eperret (Eric Perret)
  * @since 186.internal
  * @param <C> Contains the changeList information.
  */
-@Immutable
-@ThreadSafe
 public class ImageOptimizationService<C> implements IImageOptimizationService<C> {
 
 	/**
@@ -467,7 +464,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		try(final StringWriter writer = new StringWriter();
 			final InputStream is      = ps.getInputStream()) {
 			try {
-				IOUtils.copy(is, writer);
+				IOUtils.copy(is, writer, Charset.defaultCharset());
 				final StringBuilder errorMessage = new StringBuilder("Optimization failed with edit code: ").append(ps.exitValue()).append(". ").append(writer);
 				if(ps.exitValue() == 127 /* command not found */) {
 					throw new ThirdPartyBinaryNotFoundException(binaryApplicationName, "Most likely this is due to required libraries not being installed on the OS. On Ubuntu run \"sudo apt-get install libjpeg62:i386\".", new RuntimeException(errorMessage.toString()));

@@ -12,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.nio.charset.Charset;
 import java.util.Iterator;
 
 import javax.imageio.ImageIO;
@@ -20,21 +21,17 @@ import javax.imageio.stream.ImageInputStream;
 import javax.swing.ImageIcon;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.annotation.Immutable;
-import org.apache.http.annotation.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.salesforce.perfeng.uiperf.ThirdPartyBinaryNotFoundException;
 
 /**
- * Utility methods used to interact with images.
+ * Utility methods used to interact with images. This class is immutable and threadsafe.
  * 
  * @author eperret (Eric Perret)
  * @since 186.internal
  */
-@Immutable
-@ThreadSafe
 public class ImageUtils {
 
 	private final static Logger logger = LoggerFactory.getLogger(ImageUtils.class);
@@ -196,7 +193,7 @@ public class ImageUtils {
 		try(final StringWriter writer = new StringWriter();
 			final InputStream is      = ps.getInputStream()) {
 			try {
-				IOUtils.copy(is, writer);
+				IOUtils.copy(is, writer, Charset.defaultCharset());
 				final StringBuilder errorMessage = new StringBuilder("Image conversion failed with edit code: ").append(ps.exitValue()).append(". ").append(writer);
 				if(ps.exitValue() == 127 /* command not found */) {
 					throw new ThirdPartyBinaryNotFoundException(binaryApplicationName, "Most likely this is due to ImageMagick not being installed on the OS. On Ubuntu run \"sudo apt-get install imagemagick\".", new RuntimeException(errorMessage.toString()));
@@ -231,7 +228,7 @@ public class ImageUtils {
 		try {
 			ps = new ProcessBuilder(CONVERT_BINARY, fromImage.getCanonicalPath(), toImage.getCanonicalPath()).start();
 		} catch(final IOException ioe) {
-			throw new ThirdPartyBinaryNotFoundException(CONVERT_BINARY, "Most likely this is due to ImageMagic not being installed on the OS. On Ubuntu run \"sudo apt-get install imagemagick\".", ioe);
+			throw new ThirdPartyBinaryNotFoundException(CONVERT_BINARY, "Most likely this is due to ImageMagick not being installed on the OS. On Ubuntu run \"sudo apt-get install imagemagick\".", ioe);
 		}
 		
 		if((ps.waitFor() != 0) || !toImage.exists()) {
