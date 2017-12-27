@@ -31,7 +31,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -41,7 +40,7 @@ import java.io.InputStream;
 import java.net.URLConnection;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.salesforce.perfeng.uiperf.ThirdPartyBinaryNotFoundException;
 import com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService;
@@ -146,7 +145,7 @@ public class ImageUtilsTest {
         assertThat(FileUtils.checksumCRC32(fileToConvert), equalTo(fileToConvertHash));
         
         try(final InputStream is = new BufferedInputStream(new FileInputStream(convertedFile))) {
-            assertEquals(IImageOptimizationService.PNG_MIME_TYPE, URLConnection.guessContentTypeFromStream(is));
+            assertThat(URLConnection.guessContentTypeFromStream(is), equalTo(IImageOptimizationService.PNG_MIME_TYPE));
         }
         assertThat(ImageUtils.visuallyCompare(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/forceapp_bg.gif"), convertedFile), equalTo(true));
         
