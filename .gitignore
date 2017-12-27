@@ -1,6 +1,7 @@
 *.class
 *.DS_Store
 *.log
+*.classpath
 
 # Package Files #
 *.jar

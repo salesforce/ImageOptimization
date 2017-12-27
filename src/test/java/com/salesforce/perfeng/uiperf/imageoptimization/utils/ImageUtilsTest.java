@@ -62,23 +62,23 @@ public class ImageUtilsTest {
 	@Test
     public void testVisuallyCompare() throws ThirdPartyBinaryNotFoundException {
 
-        assertThat(ImageUtils.visuallyCompare(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small.jpg"),
-                new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small_smushit.jpg")), equalTo(true));
+        assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small.jpg"),
+                new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small_smushit.jpg")), equalTo(true));
 
-        assertThat(ImageUtils.visuallyCompare(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small.jpg"), 
-                new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small_jpegmini.jpg")), equalTo(false));
+        assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small.jpg"), 
+                new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small_jpegmini.jpg")), equalTo(false));
 
-        assertThat(ImageUtils.visuallyCompare(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/2013_summer_force.gif"), 
-                new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/2013_summer_force.gif")), equalTo(true));
+        assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/2013_summer_force.gif"), 
+                new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/2013_summer_force.gif")), equalTo(true));
 
-        assertThat(ImageUtils.visuallyCompare(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/safe32_optimized.png"), 
-                new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/safe32_unoptimized.png")), equalTo(false));
+        assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/safe32_optimized.png"), 
+                new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/safe32_unoptimized.png")), equalTo(false));
 
-        assertThat(ImageUtils.visuallyCompare(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/no_transparency.gif"), 
-                new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/no_transparency.gif.tmp")), equalTo(true));
+        assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/no_transparency.gif"), 
+                new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/no_transparency.gif.tmp")), equalTo(true));
 
-        assertThat(ImageUtils.visuallyCompare(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/s-arrow-bo.gif"), 
-                new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/s-arrow-bo2.gif")), equalTo(true));
+        assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/s-arrow-bo.gif"), 
+                new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/s-arrow-bo2.gif")), equalTo(true));
     }
 
     /**
@@ -87,14 +87,14 @@ public class ImageUtilsTest {
     @SuppressWarnings({ "static-method", "boxing" })
     @Test
     public void testContainsAlphaTransparency() {
-    	assertThat(ImageUtils.containsAlphaTransparency(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small.jpg")), equalTo(false));
-    	assertThat(ImageUtils.containsAlphaTransparency(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small_smushit.jpg")), equalTo(false));
-    	assertThat(ImageUtils.containsAlphaTransparency(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small_jpegmini.jpg")), equalTo(false));
-    	assertThat(ImageUtils.containsAlphaTransparency(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/no_transparency.gif")), equalTo(false));
-    	assertThat(ImageUtils.containsAlphaTransparency(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/no_transparency.gif.tmp")), equalTo(false));
-    	assertThat(ImageUtils.containsAlphaTransparency(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/2013_summer_force.gif")), equalTo(true));
-    	assertThat(ImageUtils.containsAlphaTransparency(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/safe32_optimized.png")), equalTo(true));
-    	assertThat(ImageUtils.containsAlphaTransparency(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/safe32_unoptimized.png")), equalTo(true));
+    	assertThat(ImageUtils.containsAlphaTransparency(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small.jpg")), equalTo(false));
+    	assertThat(ImageUtils.containsAlphaTransparency(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small_smushit.jpg")), equalTo(false));
+    	assertThat(ImageUtils.containsAlphaTransparency(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small_jpegmini.jpg")), equalTo(false));
+    	assertThat(ImageUtils.containsAlphaTransparency(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/no_transparency.gif")), equalTo(false));
+    	assertThat(ImageUtils.containsAlphaTransparency(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/no_transparency.gif.tmp")), equalTo(false));
+    	assertThat(ImageUtils.containsAlphaTransparency(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/2013_summer_force.gif")), equalTo(true));
+    	assertThat(ImageUtils.containsAlphaTransparency(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/safe32_optimized.png")), equalTo(true));
+    	assertThat(ImageUtils.containsAlphaTransparency(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/safe32_unoptimized.png")), equalTo(true));
     }
 
     /**
@@ -106,14 +106,14 @@ public class ImageUtilsTest {
     @Test
     public void testGetBufferedImage() {
 
-    	assertThat(ImageUtils.getBufferedImage(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small.jpg")), notNullValue());
-    	assertThat(ImageUtils.getBufferedImage(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small_smushit.jpg")), notNullValue());
-    	assertThat(ImageUtils.getBufferedImage(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small_jpegmini.jpg")), notNullValue());
-        assertThat(ImageUtils.getBufferedImage(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/no_transparency.gif")), notNullValue());
-        assertThat(ImageUtils.getBufferedImage(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/no_transparency.gif.tmp")), notNullValue());
-        assertThat(ImageUtils.getBufferedImage(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/2013_summer_force.gif")), notNullValue());
-        assertThat(ImageUtils.getBufferedImage(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/safe32_optimized.png")), notNullValue());
-        assertThat(ImageUtils.getBufferedImage(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/safe32_unoptimized.png")), notNullValue());
+    	assertThat(ImageUtils.getBufferedImage(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small.jpg")), notNullValue());
+    	assertThat(ImageUtils.getBufferedImage(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small_smushit.jpg")), notNullValue());
+    	assertThat(ImageUtils.getBufferedImage(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small_jpegmini.jpg")), notNullValue());
+        assertThat(ImageUtils.getBufferedImage(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/no_transparency.gif")), notNullValue());
+        assertThat(ImageUtils.getBufferedImage(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/no_transparency.gif.tmp")), notNullValue());
+        assertThat(ImageUtils.getBufferedImage(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/2013_summer_force.gif")), notNullValue());
+        assertThat(ImageUtils.getBufferedImage(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/safe32_optimized.png")), notNullValue());
+        assertThat(ImageUtils.getBufferedImage(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/safe32_unoptimized.png")), notNullValue());
     }
 
     /**
@@ -129,7 +129,7 @@ public class ImageUtilsTest {
     @Test
     public void testConvertImageNative() throws IOException, ThirdPartyBinaryNotFoundException, InterruptedException {
 
-        final File fileToConvert = new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/forceapp_bg.gif");
+        final File fileToConvert = new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/forceapp_bg.gif");
         final long fileToConvertHash = FileUtils.checksumCRC32(fileToConvert);
         
         File convertedFile = File.createTempFile(ImageOptimizationServiceTest.class.getName(), "." + IImageOptimizationService.PNG_EXTENSION);
@@ -147,7 +147,7 @@ public class ImageUtilsTest {
         try(final InputStream is = new BufferedInputStream(new FileInputStream(convertedFile))) {
             assertThat(URLConnection.guessContentTypeFromStream(is), equalTo(IImageOptimizationService.PNG_MIME_TYPE));
         }
-        assertThat(ImageUtils.visuallyCompare(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/forceapp_bg.gif"), convertedFile), equalTo(true));
+        assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/forceapp_bg.gif"), convertedFile), equalTo(true));
         
         final File tmpDir = File.createTempFile(ImageOptimizationServiceTest.class.getName(), "");
         tmpDir.delete();
@@ -155,7 +155,7 @@ public class ImageUtilsTest {
         tmpDir.deleteOnExit();
         
         convertedFile = new File(tmpDir.getCanonicalPath() + "/forceapp_bg." + IImageOptimizationService.PNG_EXTENSION);
-        ImageUtils.convertImageNative(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/forceapp_bg.gif"), convertedFile);
+        ImageUtils.convertImageNative(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/forceapp_bg.gif"), convertedFile);
 
         assertThat(convertedFile.exists(), equalTo(true));
         assertThat(convertedFile.canRead(), equalTo(true));
@@ -169,7 +169,7 @@ public class ImageUtilsTest {
         try(final InputStream is = new BufferedInputStream(new FileInputStream(convertedFile))) {
             assertThat(URLConnection.guessContentTypeFromStream(is), equalTo(IImageOptimizationService.PNG_MIME_TYPE));
         }
-        assertThat(ImageUtils.visuallyCompare(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/utils/forceapp_bg.gif"), convertedFile), equalTo(true));
+        assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/forceapp_bg.gif"), convertedFile), equalTo(true));
     }
 
     /**
@@ -178,8 +178,8 @@ public class ImageUtilsTest {
     @SuppressWarnings({ "static-method", "boxing" })
     @Test
     public void testIsAminatedGif() {
-        assertThat(ImageUtils.isAminatedGif(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/loading.gif")), equalTo(true));
-        assertThat(ImageUtils.isAminatedGif(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/el_icon.gif")), equalTo(false));
-        assertThat(ImageUtils.isAminatedGif(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/addCol.gif")), equalTo(false));
+        assertThat(ImageUtils.isAminatedGif(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/loading.gif")), equalTo(true));
+        assertThat(ImageUtils.isAminatedGif(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/el_icon.gif")), equalTo(false));
+        assertThat(ImageUtils.isAminatedGif(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/addCol.gif")), equalTo(false));
     }
 }

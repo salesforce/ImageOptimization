@@ -687,10 +687,10 @@ public class ImageOptimizationServiceTest {
 		}
 
 		//Testing with NONE
-		assertThrows(ImageFileOptimizationException.class, () -> { new ImageOptimizationService<>(getTempDir(), new File(defaultBinaryAppLocation), 1).optimizeAllImages(FileTypeConversion.NONE, false, filesToOptimize); });
+		assertThrows(TimeoutException.class, () -> { new ImageOptimizationService<>(getTempDir(), new File(defaultBinaryAppLocation), 1).optimizeAllImages(FileTypeConversion.NONE, false, filesToOptimize); });
 
 		//Testing with NONE and YES WebP
-		assertThrows(ImageFileOptimizationException.class, () -> { new ImageOptimizationService<>(getTempDir(), new File(defaultBinaryAppLocation), 1).optimizeAllImages(FileTypeConversion.NONE, true, filesToOptimize); });
+		assertThrows(TimeoutException.class, () -> { new ImageOptimizationService<>(getTempDir(), new File(defaultBinaryAppLocation), 1).optimizeAllImages(FileTypeConversion.NONE, true, filesToOptimize); });
 		
 		List<OptimizationResult<Object>> results = new ImageOptimizationService<>(getTempDir(), new File(defaultBinaryAppLocation)).optimizeAllImages(FileTypeConversion.NONE, false, (Collection<File>)null);
 		assertThat(results, notNullValue());
@@ -829,7 +829,7 @@ public class ImageOptimizationServiceTest {
 		//Test 1
 		File workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "owner_key_icon.png");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"), workingFile);
 		long workingFileSize = workingFile.length();
 		
 		File optimizedFile = imageOptimizationService.executeAdvpng(workingFile, workingFile.getCanonicalPath());
@@ -840,7 +840,7 @@ public class ImageOptimizationServiceTest {
 		//Test 2
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "csv_120.png");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executeAdvpng(workingFile, workingFile.getCanonicalPath());
@@ -851,7 +851,7 @@ public class ImageOptimizationServiceTest {
 		//Test 3
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "doctype_16_sprite.png");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executeAdvpng(workingFile, workingFile.getCanonicalPath());
@@ -862,7 +862,7 @@ public class ImageOptimizationServiceTest {
 		//Test 4
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "sprite arrow enlarge max min shrink x blue.gif.png");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sprite arrow enlarge max min shrink x blue.gif.png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sprite arrow enlarge max min shrink x blue.gif.png"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executeAdvpng(workingFile, workingFile.getCanonicalPath());
@@ -885,18 +885,18 @@ public class ImageOptimizationServiceTest {
 		//Test 1
 		File workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "owner_key_icon.png");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"), workingFile);
 		long workingFileSize = workingFile.length();
 		
 		File optimizedFile = imageOptimizationService.executePngquant(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue());
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(workingFileSize));
 		
 		//Test 2
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "csv_120.png");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executePngquant(workingFile, workingFile.getCanonicalPath());
@@ -907,7 +907,7 @@ public class ImageOptimizationServiceTest {
 		//Test 3
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "csv_120.2png");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.2png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.2png"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executePngquant(workingFile, workingFile.getCanonicalPath());
@@ -918,29 +918,29 @@ public class ImageOptimizationServiceTest {
 		//Test 4
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "safe32.png");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/safe32.png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/safe32.png"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executePngquant(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue());
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(workingFileSize));
 		
 		//Test 5
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "doctype_16_sprite.png");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executePngquant(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue());
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(workingFileSize));
 		
 		//Test 6
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "sprite arrow enlarge max min shrink x blue.gif.png");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sprite arrow enlarge max min shrink x blue.gif.png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sprite arrow enlarge max min shrink x blue.gif.png"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executePngquant(workingFile, workingFile.getCanonicalPath());
@@ -964,7 +964,7 @@ public class ImageOptimizationServiceTest {
 		//Test 1
 		File workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "owner_key_icon.png");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"), workingFile);
 		long workingFileSize = workingFile.length();
 		
 		File optimizedFile = imageOptimizationService.executePngout(workingFile, workingFile.getCanonicalPath());
@@ -975,7 +975,7 @@ public class ImageOptimizationServiceTest {
 		//Test 2
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "csv_120.png");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executePngout(workingFile, workingFile.getCanonicalPath());
@@ -986,7 +986,7 @@ public class ImageOptimizationServiceTest {
 		//Test 3
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "sprite arrow enlarge max min shrink x blue.gif.png");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sprite arrow enlarge max min shrink x blue.gif.png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sprite arrow enlarge max min shrink x blue.gif.png"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executePngout(workingFile, workingFile.getCanonicalPath());
@@ -1006,7 +1006,7 @@ public class ImageOptimizationServiceTest {
 
 		final File workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "doctype_16_sprite.png");
 
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"), workingFile);
 		final ImageFileOptimizationException ifoe = assertThrows(ImageFileOptimizationException.class, () -> { imageOptimizationService.executePngout(workingFile, workingFile.getCanonicalPath()); });
 		assertThat(ifoe, hasProperty("message", equalTo("Error while optimizing the file \"" + workingFile.getCanonicalPath() + '"')));
 	}
@@ -1040,12 +1040,12 @@ public class ImageOptimizationServiceTest {
 	 */
 	@Test
 	public void testExecuteCWebp() throws IOException, InterruptedException {
-		testExecuteCWebpHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"));
-		testExecuteCWebpHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"));
-		testExecuteCWebpHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"));
-		testExecuteCWebpHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/safe32.png"));
-		testExecuteCWebpHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sharing_model2.jpg"));
-		testExecuteCWebpHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sprite arrow enlarge max min shrink x blue.gif.png"));
+		testExecuteCWebpHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"));
+		testExecuteCWebpHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"));
+		testExecuteCWebpHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"));
+		testExecuteCWebpHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/safe32.png"));
+		testExecuteCWebpHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sharing_model2.jpg"));
+		testExecuteCWebpHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sprite arrow enlarge max min shrink x blue.gif.png"));
 	}
 	
 	@SuppressWarnings("boxing")
@@ -1073,11 +1073,11 @@ public class ImageOptimizationServiceTest {
 	 */
 	@Test
 	public void testExecuteGif2Web() throws IOException, InterruptedException {
-		testExecuteGif2WebHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/el_icon.gif"));
-		testExecuteGif2WebHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/loading.gif"));
-		testExecuteGif2WebHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/no_transparency.gif"));
-		testExecuteGif2WebHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/addCol.gif"));
-		testExecuteGif2WebHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/s arrow bo.gif"));
+		testExecuteGif2WebHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/el_icon.gif"));
+		testExecuteGif2WebHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/loading.gif"));
+		testExecuteGif2WebHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/no_transparency.gif"));
+		testExecuteGif2WebHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/addCol.gif"));
+		testExecuteGif2WebHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/s arrow bo.gif"));
 	}
 
 	/**
@@ -1094,7 +1094,7 @@ public class ImageOptimizationServiceTest {
 		
 		File workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "owner_key_icon.png");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"), workingFile);
 		long workingFileSize = workingFile.length();
 		
 		File optimizedFile = imageOptimizationService.executeOptipng(workingFile, workingFile.getCanonicalPath());
@@ -1104,7 +1104,7 @@ public class ImageOptimizationServiceTest {
 		
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "csv_120.png");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executeOptipng(workingFile, workingFile.getCanonicalPath());
@@ -1114,7 +1114,7 @@ public class ImageOptimizationServiceTest {
 		
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "doctype_16_sprite.png");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executeOptipng(workingFile, workingFile.getCanonicalPath());
@@ -1136,7 +1136,7 @@ public class ImageOptimizationServiceTest {
 		//Test 1
 		File workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "sharing_model2.jpg");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sharing_model2.jpg"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sharing_model2.jpg"), workingFile);
 		long workingFileSize = workingFile.length();
 		
 		File optimizedFile = imageOptimizationService.executeJpegtran(workingFile, workingFile.getCanonicalPath());
@@ -1147,7 +1147,7 @@ public class ImageOptimizationServiceTest {
 		//Test 2
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "sharin g model2.jpg");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sharin g model2.jpg"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sharin g model2.jpg"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executeJpegtran(workingFile, workingFile.getCanonicalPath());
@@ -1171,7 +1171,7 @@ public class ImageOptimizationServiceTest {
 		//Test 1
 		File workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "sharing_model2.jpg");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sharing_model2.jpg"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sharing_model2.jpg"), workingFile);
 		long workingFileSize = workingFile.length();
 		
 		File optimizedFile = imageOptimizationService.executeJfifremove(workingFile, workingFile.getCanonicalPath());
@@ -1182,7 +1182,7 @@ public class ImageOptimizationServiceTest {
 		//Test 2
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "sharin g model2.jpg");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sharin g model2.jpg"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sharin g model2.jpg"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executeJfifremove(workingFile, workingFile.getCanonicalPath());
@@ -1204,7 +1204,7 @@ public class ImageOptimizationServiceTest {
 		//Test 1
 		File workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "el_icon.gif");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/el_icon.gif"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/el_icon.gif"), workingFile);
 		long workingFileSize = workingFile.length();
 		
 		File optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
@@ -1215,7 +1215,7 @@ public class ImageOptimizationServiceTest {
 		//Test 2
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "loading.gif");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/loading.gif"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/loading.gif"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
@@ -1226,7 +1226,7 @@ public class ImageOptimizationServiceTest {
 		//Test 3
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "no_transparency.gif");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/no_transparency.gif"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/no_transparency.gif"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
@@ -1237,7 +1237,7 @@ public class ImageOptimizationServiceTest {
 		//Test 4
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "addCol.gif");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/addCol.gif"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/addCol.gif"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
@@ -1248,7 +1248,7 @@ public class ImageOptimizationServiceTest {
 		//Test 5
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "s-arrow-bo.gif");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/s-arrow-bo.gif"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/s-arrow-bo.gif"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
@@ -1259,7 +1259,7 @@ public class ImageOptimizationServiceTest {
 		//Test 6
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "s arrow bo.gif");
 		
-		FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/s arrow bo.gif"), workingFile);
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/s arrow bo.gif"), workingFile);
 		workingFileSize = workingFile.length();
 		
 		optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
@@ -1302,7 +1302,7 @@ public class ImageOptimizationServiceTest {
 		 * @throws IOException Thrown when calculating the masterFileChecksum
 		 */
 		ImageOptimizationTestDTO(final String fileName, final boolean failedAutomatedTest, final boolean fileTypeChanged, final boolean isOptimized) throws IOException {
-			masterFile = new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service" + File.separator + fileName);
+			masterFile = new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service" + File.separator + fileName);
 			assertThat("Issue with test setup.  Looks like the required file for the test is not present.", masterFile, FileMatchers.anExistingFile());
 			masterFileChecksum = FileUtils.checksumCRC32(masterFile);
 			this.failedAutomatedTest = failedAutomatedTest;
