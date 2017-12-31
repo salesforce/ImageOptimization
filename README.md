@@ -88,7 +88,7 @@ The function returns a list of `OptimizationResult` objects.
 
 ### How is the Optimization Actually Accomplished? ###
 
-The heavy lifting is done by 6 different binary applications: [advpng](http://advancemame.sourceforge.net/doc-advpng.html), [gifsicle](http://www.lcdf.org/gifsicle/), [jfifremove](https://lyncd.com/files/imgopt/jfifremove.c), [jpegtran](http://jpegclub.org/jpegtran/), [optipng](http://optipng.sourceforge.net/), [pngout](http://advsys.net/ken/utils.htm), [pngquant](https://pngquant.org/).
+The heavy lifting is done by 6 different binary applications: [advpng](http://advancemame.sourceforge.net/doc-advpng.html), [gifsicle](https://www.lcdf.org/gifsicle/), [jfifremove](https://lyncd.com/files/imgopt/jfifremove.c), [jpegtran](http://jpegclub.org/jpegtran/), [optipng](http://optipng.sourceforge.net/), [pngout](http://advsys.net/ken/utils.htm), [pngquant](https://pngquant.org/).
 
 The JAVA code calls out to these binaries and using the appropriate ones for the image format.  The code does this twice.  For some reason passing in an already optimized image will result in a few bytes reduction the second time it is optimized.
 

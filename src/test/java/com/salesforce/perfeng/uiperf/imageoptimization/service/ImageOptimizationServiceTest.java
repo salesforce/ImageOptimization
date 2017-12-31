@@ -45,6 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,7 +56,6 @@ import java.util.concurrent.TimeoutException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.hamcrest.collection.IsEmptyCollection;
-import org.hamcrest.io.FileMatchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -321,14 +321,7 @@ public class ImageOptimizationServiceTest {
 	}
 	
 	private static final int getNumberOfWebPCompatibleImages(final ImageOptimizationTestDTO[] imageOptimizationTestDTOList) {
-		int count = 0;
-		
-		for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-			if(!imageOptimizationTestDTO.isAnimatedGif() && !imageOptimizationTestDTO.isJPEG()) {
-				count++;
-			}
-		}
-		return count;
+		return (int) Arrays.stream(imageOptimizationTestDTOList).filter(dto -> dto.isWebPCompatible()).count();
 	}
 	
 	private static final int getNumberOfOptimizedImages(final ImageOptimizationTestDTO[] imageOptimizationTestDTOList) {
@@ -367,7 +360,8 @@ public class ImageOptimizationServiceTest {
 				                                                         new ImageOptimizationTestDTO("no_transparency.gif", false, true, true),
 				                                                         new ImageOptimizationTestDTO("doctype_16_sprite.png", false, false, false),
 				                                                         new ImageOptimizationTestDTO("addCol.gif", false, true, true),
-				                                                         new ImageOptimizationTestDTO("s-arrow-bo.gif", false, true, true)};
+				                                                         new ImageOptimizationTestDTO("s-arrow-bo.gif", false, true, true),
+				                                                         new ImageOptimizationTestDTO("noEvents.svg", false, false, true)};
 		
 		final int numberOfOptimizedImages = getNumberOfOptimizedImages(imageOptimizationTestDTOList);
 		
@@ -415,11 +409,10 @@ public class ImageOptimizationServiceTest {
 		
 		//WebP Check
 		for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-			if(imageOptimizationTestDTO.isJPEG()) {
+			if(!imageOptimizationTestDTO.isWebPCompatible()) {
 				//JPEG is not converted to WEBP
-				assertThat(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), nullValue());
-			} else if(imageOptimizationTestDTO.isAnimatedGif()) {
 				//Animated GIF is not converted to WEBP
+				//SVG is not converted to WEBP
 				assertThat(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), nullValue());
 			} else {
 				validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), imageOptimizationTestDTO, true);
@@ -465,12 +458,13 @@ public class ImageOptimizationServiceTest {
 		final ImageOptimizationTestDTO[] imageOptimizationTestDTOList = {new ImageOptimizationTestDTO("csv_120.png", false, false, true),
                 new ImageOptimizationTestDTO("sharing_model2.jpg", false, false, true),
                 new ImageOptimizationTestDTO("loading.gif", false, false, true),
-                new ImageOptimizationTestDTO("el_icon.gif", false, false, false),
+                new ImageOptimizationTestDTO("el_icon.gif", false, false, true),
                 new ImageOptimizationTestDTO("safe32.png", false, false, true),
                 new ImageOptimizationTestDTO("no_transparency.gif", false, false, true),
                 new ImageOptimizationTestDTO("doctype_16_sprite.png", false, false, false),
                 new ImageOptimizationTestDTO("addCol.gif", false, false, false),
-                new ImageOptimizationTestDTO("s-arrow-bo.gif", false, false, true)};
+                new ImageOptimizationTestDTO("s-arrow-bo.gif", false, false, true),
+                new ImageOptimizationTestDTO("noEvents.svg", false, false, true)};
 
 		final int numberOfOptimizedImages = getNumberOfOptimizedImages(imageOptimizationTestDTOList);
 		
@@ -518,11 +512,10 @@ public class ImageOptimizationServiceTest {
 		
 		//WebP Check
 		for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-			if(imageOptimizationTestDTO.isJPEG()) {
+			if(!imageOptimizationTestDTO.isWebPCompatible()) {
 				//JPEG is not converted to WEBP
-				assertThat(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), nullValue());
-			} else if(imageOptimizationTestDTO.isAnimatedGif()) {
 				//Animated GIF is not converted to WEBP
+				//SVG is not converted to WEBP
 				assertThat(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), nullValue());
 			} else {
 				validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), imageOptimizationTestDTO, true);
@@ -568,12 +561,13 @@ public class ImageOptimizationServiceTest {
 		final ImageOptimizationTestDTO[] imageOptimizationTestDTOList = {new ImageOptimizationTestDTO("csv_120.png", false, false, true),
                 new ImageOptimizationTestDTO("sharing_model2.jpg", false, false, true),
                 new ImageOptimizationTestDTO("loading.gif", false, false, true),
-                new ImageOptimizationTestDTO("el_icon.gif", false, false, false),
+                new ImageOptimizationTestDTO("el_icon.gif", false, false, true),
                 new ImageOptimizationTestDTO("safe32.png", false, false, true),
                 new ImageOptimizationTestDTO("no_transparency.gif", false, true, true),
                 new ImageOptimizationTestDTO("doctype_16_sprite.png", false, false, false),
                 new ImageOptimizationTestDTO("addCol.gif", false, false, false),
-                new ImageOptimizationTestDTO("s-arrow-bo.gif", false, false, true)};
+                new ImageOptimizationTestDTO("s-arrow-bo.gif", false, false, true),
+                new ImageOptimizationTestDTO("noEvents.svg", false, false, true)};
 
 		final int numberOfOptimizedImages = getNumberOfOptimizedImages(imageOptimizationTestDTOList);
 		
@@ -622,11 +616,10 @@ public class ImageOptimizationServiceTest {
 		
 		//WebP Check
 		for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-			if(imageOptimizationTestDTO.isJPEG()) {
+			if(!imageOptimizationTestDTO.isWebPCompatible()) {
 				//JPEG is not converted to WEBP
-				assertThat(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), nullValue());
-			} else if(imageOptimizationTestDTO.isAnimatedGif()) {
 				//Animated GIF is not converted to WEBP
+				//SVG is not converted to WEBP
 				assertThat(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), nullValue());
 			} else {
 				validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), imageOptimizationTestDTO, true);
@@ -679,7 +672,8 @@ public class ImageOptimizationServiceTest {
                 new ImageOptimizationTestDTO("doctype_16_sprite.png", false, false, false),
                 new ImageOptimizationTestDTO("addCol.gif", false, false, false),
                 new ImageOptimizationTestDTO("s-arrow-bo.gif", false, false, true),
-                new ImageOptimizationTestDTO("imagebomb.png", false, false, true)};
+                new ImageOptimizationTestDTO("imagebomb.png", false, false, true),
+                new ImageOptimizationTestDTO("noEvents.svg", false, false, true)};
 		
 		final List<File> filesToOptimize = new ArrayList<>(imageOptimizationTestDTOList.length);
 		for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
@@ -731,12 +725,13 @@ public class ImageOptimizationServiceTest {
 		final ImageOptimizationTestDTO[] imageOptimizationTestDTOList = {new ImageOptimizationTestDTO("csv_120.png", false, false, true),
                 new ImageOptimizationTestDTO("sharing_model2.jpg", false, false, true),
                 new ImageOptimizationTestDTO("loading.gif", false, false, true),
-                new ImageOptimizationTestDTO("el_icon.gif", false, false, false),
+                new ImageOptimizationTestDTO("el_icon.gif", false, false, true),
                 new ImageOptimizationTestDTO("safe32.png", false, false, true),
                 new ImageOptimizationTestDTO("no_transparency.gif", false, false, true),
                 new ImageOptimizationTestDTO("doctype_16_sprite.png", false, false, false),
                 new ImageOptimizationTestDTO("addCol.gif", false, false, false),
-                new ImageOptimizationTestDTO("s-arrow-bo.gif", false, false, true)};
+                new ImageOptimizationTestDTO("s-arrow-bo.gif", false, false, true),
+                new ImageOptimizationTestDTO("noEvents.svg", false, false, true)};
 
 		final int numberOfOptimizedImages = getNumberOfOptimizedImages(imageOptimizationTestDTOList);
 		
@@ -784,11 +779,10 @@ public class ImageOptimizationServiceTest {
 		
 		//WebP Check
 		for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-			if(imageOptimizationTestDTO.isJPEG()) {
+			if(!imageOptimizationTestDTO.isWebPCompatible()) {
 				//JPEG is not converted to WEBP
-				assertThat(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), nullValue());
-			} else if(imageOptimizationTestDTO.isAnimatedGif()) {
 				//Animated GIF is not converted to WEBP
+				//SVG is not converted to WEBP
 				assertThat(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), nullValue());
 			} else {
 				validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), imageOptimizationTestDTO, true);
@@ -846,7 +840,7 @@ public class ImageOptimizationServiceTest {
 		optimizedFile = imageOptimizationService.executeAdvpng(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue());
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//1099
 		
 		//Test 3
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "doctype_16_sprite.png");
@@ -868,7 +862,7 @@ public class ImageOptimizationServiceTest {
 		optimizedFile = imageOptimizationService.executeAdvpng(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue());
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//4386
 	}
 	
 	/**
@@ -902,7 +896,7 @@ public class ImageOptimizationServiceTest {
 		optimizedFile = imageOptimizationService.executePngquant(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue());
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//1144
 		
 		//Test 3
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "csv_120.2png");
@@ -913,7 +907,7 @@ public class ImageOptimizationServiceTest {
 		optimizedFile = imageOptimizationService.executePngquant(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue());
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//1144
 		
 		//Test 4
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "safe32.png");
@@ -946,7 +940,7 @@ public class ImageOptimizationServiceTest {
 		optimizedFile = imageOptimizationService.executePngquant(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue());
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//4168
 	}
 
 	/**
@@ -981,7 +975,7 @@ public class ImageOptimizationServiceTest {
 		optimizedFile = imageOptimizationService.executePngout(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue());
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//1034
 		
 		//Test 3
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "sprite arrow enlarge max min shrink x blue.gif.png");
@@ -992,7 +986,7 @@ public class ImageOptimizationServiceTest {
 		optimizedFile = imageOptimizationService.executePngout(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue());
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//4018
 	}
 	
 	/**
@@ -1025,7 +1019,7 @@ public class ImageOptimizationServiceTest {
 		if(IImageOptimizationService.JPEG_EXTENSION.equalsIgnoreCase(FilenameUtils.getExtension(fileToConvert.getName()))) {
 			assertThat(optimizedFile, aFileWithSize(greaterThan(workingFileSize)));
 		} else {
-			assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+			assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//18082,900,8942,1194,3870,3870,3870
 		}
 		assertThat(optimizedFile, aFileNamed(endsWith(IImageOptimizationService.WEBP_EXTENSION)));
 	}
@@ -1059,7 +1053,7 @@ public class ImageOptimizationServiceTest {
 		final File optimizedFile = imageOptimizationService.executeGif2Webp(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue());
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//1042,2840,31934,246,122
 		assertThat(optimizedFile, aFileNamed(endsWith(IImageOptimizationService.WEBP_EXTENSION)));
 	}
 	
@@ -1110,7 +1104,7 @@ public class ImageOptimizationServiceTest {
 		optimizedFile = imageOptimizationService.executeOptipng(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue());
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//1220
 		
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "doctype_16_sprite.png");
 		
@@ -1120,7 +1114,7 @@ public class ImageOptimizationServiceTest {
 		optimizedFile = imageOptimizationService.executeOptipng(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue());
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//15784
 	}
 
 	/**
@@ -1177,7 +1171,7 @@ public class ImageOptimizationServiceTest {
 		File optimizedFile = imageOptimizationService.executeJfifremove(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue());
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//123496
 		
 		//Test 2
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "sharin g model2.jpg");
@@ -1188,7 +1182,7 @@ public class ImageOptimizationServiceTest {
 		optimizedFile = imageOptimizationService.executeJfifremove(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue());
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//123496
 	}
 
 	/**
@@ -1210,7 +1204,7 @@ public class ImageOptimizationServiceTest {
 		File optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue(File.class));
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(Long.valueOf(optimizedFile.length()), equalTo(Long.valueOf(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//245
 		
 		//Test 2
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "loading.gif");
@@ -1221,7 +1215,7 @@ public class ImageOptimizationServiceTest {
 		optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue(File.class));
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//2290
 		
 		//Test 3
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "no_transparency.gif");
@@ -1232,7 +1226,7 @@ public class ImageOptimizationServiceTest {
 		optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue(File.class));
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(Long.valueOf(optimizedFile.length()), lessThan(Long.valueOf(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//43608
 		
 		//Test 4
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "addCol.gif");
@@ -1243,7 +1237,7 @@ public class ImageOptimizationServiceTest {
 		optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue(File.class));
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(Long.valueOf(optimizedFile.length()), equalTo(Long.valueOf(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(workingFileSize));
 		
 		//Test 5
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "s-arrow-bo.gif");
@@ -1254,7 +1248,7 @@ public class ImageOptimizationServiceTest {
 		optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue(File.class));
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(Long.valueOf(optimizedFile.length()), lessThan(Long.valueOf(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//174
 		
 		//Test 6
 		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "s arrow bo.gif");
@@ -1265,7 +1259,62 @@ public class ImageOptimizationServiceTest {
 		optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
 		assertThat(optimizedFile, notNullValue(File.class));
 		assertThat(optimizedFile, anExistingFile());
-		assertThat(Long.valueOf(optimizedFile.length()), lessThan(Long.valueOf(workingFileSize)));
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));//174
+	}
+	
+	/**
+	 * Test for {@link ImageOptimizationService#executeSvgop(File, String)}.
+	 * 
+	 * @throws IOException Can be thrown when interacting with various files.
+	 * @throws InterruptedException Can be thrown by the optimization service when optimizing the files.
+	 */
+	@SuppressWarnings("boxing")
+	@Test
+	public void testExecuteSvgop() throws IOException, InterruptedException {
+		
+		//Test 1
+		File workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "noEvents.svg");
+		
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/noEvents.svg"), workingFile);
+		long workingFileSize = workingFile.length();
+		
+		File optimizedFile = imageOptimizationService.executeSvgop(workingFile, workingFile.getCanonicalPath());
+		assertThat(optimizedFile, notNullValue());
+		assertThat(optimizedFile, anExistingFile());
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		
+		//Test 2
+		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "car.svg");
+		
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/car.svg"), workingFile);
+		workingFileSize = workingFile.length();
+		
+		optimizedFile = imageOptimizationService.executeSvgop(workingFile, workingFile.getCanonicalPath());
+		assertThat(optimizedFile, notNullValue());
+		assertThat(optimizedFile, anExistingFile());
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		
+		//Test 3
+		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "decimal.svg");
+		
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/car.svg"), workingFile);
+		workingFileSize = workingFile.length();
+		
+		optimizedFile = imageOptimizationService.executeSvgop(workingFile, workingFile.getCanonicalPath());
+		assertThat(optimizedFile, notNullValue());
+		assertThat(optimizedFile, anExistingFile());
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
+		
+		//Test 4
+		workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "DroidSans.svg");
+		
+		FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/DroidSans.svg"), workingFile);
+		workingFileSize = workingFile.length();
+		
+		optimizedFile = imageOptimizationService.executeSvgop(workingFile, workingFile.getCanonicalPath());
+		assertThat(optimizedFile, notNullValue());
+		assertThat(optimizedFile, anExistingFile());
+		assertThat(optimizedFile, aFileWithSize(lessThan(workingFileSize)));
 	}
 
 	/**
@@ -1281,13 +1330,14 @@ public class ImageOptimizationServiceTest {
 		assertThat((new ImageOptimizationService<>(tmpDir, new File(defaultBinaryAppLocation))).getFinalResultsDirectory(), equalTo(tmpDir.getCanonicalPath() + File.separator + "final"));
 	}
 	
-	private static class ImageOptimizationTestDTO {
+	private static final class ImageOptimizationTestDTO {
 		
 		private final File masterFile;
 		private final long masterFileChecksum;
 		private final boolean failedAutomatedTest;
 		private final boolean fileTypeChanged;
 		private final boolean isJPEG;
+		private final boolean isSVG;
 		private final boolean isAnimatedGif;
 		private final boolean isOptimized;
 		
@@ -1303,11 +1353,13 @@ public class ImageOptimizationServiceTest {
 		 */
 		ImageOptimizationTestDTO(final String fileName, final boolean failedAutomatedTest, final boolean fileTypeChanged, final boolean isOptimized) throws IOException {
 			masterFile = new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service" + File.separator + fileName);
-			assertThat("Issue with test setup.  Looks like the required file for the test is not present.", masterFile, FileMatchers.anExistingFile());
+			assertThat("Issue with test setup.  Looks like the required file for the test is not present.", masterFile, anExistingFile());
 			masterFileChecksum = FileUtils.checksumCRC32(masterFile);
 			this.failedAutomatedTest = failedAutomatedTest;
 			this.fileTypeChanged = fileTypeChanged;
-			this.isJPEG = (IImageOptimizationService.JPEG_EXTENSION.equalsIgnoreCase(FilenameUtils.getExtension(fileName)));
+			final String extension = FilenameUtils.getExtension(fileName);
+			this.isJPEG = (IImageOptimizationService.JPEG_EXTENSION.equalsIgnoreCase(extension));
+			this.isSVG = (IImageOptimizationService.SVG_EXTENSION.equalsIgnoreCase(extension));
 			this.isAnimatedGif = ImageUtils.isAminatedGif(masterFile);
 			this.isOptimized = isOptimized;
 		}
@@ -1332,6 +1384,12 @@ public class ImageOptimizationServiceTest {
 		}
 		public boolean isOptimized() {
 			return isOptimized;
+		}
+		public boolean isSVG() {
+			return isSVG;
+		}
+		public boolean isWebPCompatible() {
+			return !isAnimatedGif() && !isJPEG() && !isSVG();
 		}
 	}
 }

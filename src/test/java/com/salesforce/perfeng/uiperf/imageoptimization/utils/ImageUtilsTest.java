@@ -53,7 +53,7 @@ import com.salesforce.perfeng.uiperf.imageoptimization.service.ImageOptimization
 public class ImageUtilsTest {
 
     /**
-     * Test for {@link ImageUtils#visuallyCompare(File, File)}.
+     * Test for {@link ImagesEqual#visuallyCompare(File, File)}.
      * 
      * @throws ThirdPartyBinaryNotFoundException Thrown if the 3rd party binary used for optimizing images does not
      *         exist.
@@ -62,23 +62,41 @@ public class ImageUtilsTest {
 	@Test
     public void testVisuallyCompare() throws ThirdPartyBinaryNotFoundException {
 
-        assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small.jpg"),
+    	assertThat(ImagesEqual.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small.jpg"),
                 new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small_smushit.jpg")), equalTo(true));
 
-        assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small.jpg"), 
+        assertThat(ImagesEqual.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small.jpg"), 
                 new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/sergey_reasonably_small_jpegmini.jpg")), equalTo(false));
 
-        assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/2013_summer_force.gif"), 
+        assertThat(ImagesEqual.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/2013_summer_force.gif"), 
                 new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/2013_summer_force.gif")), equalTo(true));
 
-        assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/safe32_optimized.png"), 
+        assertThat(ImagesEqual.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/safe32_optimized.png"), 
                 new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/safe32_unoptimized.png")), equalTo(false));
 
-        assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/no_transparency.gif"), 
+        assertThat(ImagesEqual.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/no_transparency.gif"), 
                 new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/no_transparency.gif.tmp")), equalTo(true));
 
-        assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/s-arrow-bo.gif"), 
+        assertThat(ImagesEqual.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/s-arrow-bo.gif"), 
                 new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/s-arrow-bo2.gif")), equalTo(true));
+
+        assertThat(ImagesEqual.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/s-arrow-bo.gif"), 
+                new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/s-arrow-bo2.gif")), equalTo(true));
+        
+        assertThat(ImagesEqual.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/einstein-header-narrow.svg"), 
+                new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/einstein-header-narrow.min.svg")), equalTo(true));
+        
+        assertThat(ImagesEqual.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/check.svg"), 
+                new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/check.min.svg")), equalTo(true));
+        
+        assertThat(ImagesEqual.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/check.min.diff.svg"), 
+                new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/check.min.svg")), equalTo(false));
+        
+        assertThat(ImagesEqual.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/noEvents.svg"), 
+                new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/noEvents.min.svg")), equalTo(false));
+        
+        assertThat(ImagesEqual.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/1/noEvents.svg"), 
+                new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/1/noEvents.min.svg")), equalTo(true));
     }
 
     /**
@@ -147,7 +165,7 @@ public class ImageUtilsTest {
         try(final InputStream is = new BufferedInputStream(new FileInputStream(convertedFile))) {
             assertThat(URLConnection.guessContentTypeFromStream(is), equalTo(IImageOptimizationService.PNG_MIME_TYPE));
         }
-        assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/forceapp_bg.gif"), convertedFile), equalTo(true));
+        assertThat(ImagesEqual.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/forceapp_bg.gif"), convertedFile), equalTo(true));
         
         final File tmpDir = File.createTempFile(ImageOptimizationServiceTest.class.getName(), "");
         tmpDir.delete();
@@ -169,7 +187,7 @@ public class ImageUtilsTest {
         try(final InputStream is = new BufferedInputStream(new FileInputStream(convertedFile))) {
             assertThat(URLConnection.guessContentTypeFromStream(is), equalTo(IImageOptimizationService.PNG_MIME_TYPE));
         }
-        assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/forceapp_bg.gif"), convertedFile), equalTo(true));
+        assertThat(ImagesEqual.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/forceapp_bg.gif"), convertedFile), equalTo(true));
     }
 
     /**
@@ -181,5 +199,6 @@ public class ImageUtilsTest {
         assertThat(ImageUtils.isAminatedGif(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/loading.gif")), equalTo(true));
         assertThat(ImageUtils.isAminatedGif(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/el_icon.gif")), equalTo(false));
         assertThat(ImageUtils.isAminatedGif(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/addCol.gif")), equalTo(false));
+        assertThat(ImageUtils.isAminatedGif(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/check.min.diff.svg")), equalTo(false));
     }
 }

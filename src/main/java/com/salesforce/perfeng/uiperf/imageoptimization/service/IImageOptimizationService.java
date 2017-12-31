@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, Salesforce.com, Inc.
+ * Copyright (c) 2017, Salesforce.com, Inc.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without 
@@ -84,6 +84,14 @@ public interface IImageOptimizationService<C> {
 	 * The WebP mime type.
 	 */
 	public final static String WEBP_MIME_TYPE = "image/webp";
+	/**
+	 * The SVG extension.
+	 */
+	public final static String SVG_EXTENSION = "svg";
+	/**
+	 * The SVG mime type.
+	 */
+	public final static String SVG_MIME_TYPE = "image/svg+xml";
 	
 	/**
 	 * <p>Used by the image optimization service to indicate if and how images 
@@ -129,7 +137,7 @@ public interface IImageOptimizationService<C> {
 	 * The complete list of supported file extensions that the service will 
 	 * optimize.
 	 */
-	public final static String[] SUPPORTED_FILE_EXTENSIONS = {PNG_EXTENSION, JPEG_EXTENSION, GIF_EXTENSION, JPEG_EXTENSION2, JPEG_EXTENSION3, PNG_EXTENSION.toUpperCase(), JPEG_EXTENSION.toUpperCase(), GIF_EXTENSION.toUpperCase(), JPEG_EXTENSION2.toUpperCase(), JPEG_EXTENSION3.toUpperCase()};
+	public final static String[] SUPPORTED_FILE_EXTENSIONS = {PNG_EXTENSION, JPEG_EXTENSION, GIF_EXTENSION, JPEG_EXTENSION2, JPEG_EXTENSION3, SVG_EXTENSION, PNG_EXTENSION.toUpperCase(), JPEG_EXTENSION.toUpperCase(), GIF_EXTENSION.toUpperCase(), JPEG_EXTENSION2.toUpperCase(), JPEG_EXTENSION3.toUpperCase(), SVG_EXTENSION.toUpperCase()};
 
 	/**
 	 * This method will try to optimize all of the passed in images.

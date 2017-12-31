@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, Salesforce.com, Inc.
+ * Copyright (c) 2017, Salesforce.com, Inc.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without 
@@ -35,6 +35,8 @@ import static com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOpti
 import static com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.JPEG_MIME_TYPE;
 import static com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.PNG_EXTENSION;
 import static com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.PNG_MIME_TYPE;
+import static com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.SVG_EXTENSION;
+import static com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.SVG_MIME_TYPE;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -134,16 +136,20 @@ public class Main {
 	 *         {@code false}.
 	 */
 	private static final boolean isValidContentType(final String contentType, final String extension) {
-		if(PNG_EXTENSION.equals(extension)) {
-			return PNG_MIME_TYPE.equals(contentType);
+		switch(extension) {
+			case PNG_EXTENSION:
+				return PNG_MIME_TYPE.equals(contentType);
+			case GIF_EXTENSION:
+				return GIF_MIME_TYPE.equals(contentType);
+			case JPEG_EXTENSION:
+			case JPEG_EXTENSION2:
+			case JPEG_EXTENSION3:
+				return JPEG_MIME_TYPE.equals(contentType);
+			case SVG_EXTENSION:
+				return SVG_MIME_TYPE.equals(contentType) || (contentType == null);
+			default:
+				return false;
 		}
-		if(GIF_EXTENSION.equals(extension)) {
-			return GIF_MIME_TYPE.equals(contentType);
-		}
-		if(JPEG_EXTENSION.equals(extension) || JPEG_EXTENSION2.equals(extension) || JPEG_EXTENSION3.equals(extension)) {
-			return JPEG_MIME_TYPE.equals(contentType);
-		}
-		return false;
 	}
 	
 	/**
@@ -159,11 +165,10 @@ public class Main {
 		final List<File> images = new ArrayList<>();
 		for(final String rootDirectory : rootDirectories) {
 			logger.info("Starting with {} at {}", rootDirectory, new Date());
-			InputStream is = null;
+			
 			final Collection<File> c = FileUtils.listFiles(new File(rootDirectory), IImageOptimizationService.SUPPORTED_FILE_EXTENSIONS, true);
 			for(final File image : c) {
-				try {
-					is = new BufferedInputStream(new FileInputStream(image));
+				try(final InputStream is = new BufferedInputStream(new FileInputStream(image))) {
 					final String contentType = URLConnection.guessContentTypeFromStream(is);
 					
 					if(isValidContentType(contentType, FilenameUtils.getExtension(image.getName()).toLowerCase())) {
@@ -171,19 +176,10 @@ public class Main {
 					} else if(image.length() > 0) {
 						logger.warn("Skipping file. Unexpected content type for file\n\tfile: {}\n\tcontentType: {}", image.getPath(), contentType);
 					}
-				} finally {
-					if(is != null) {
-						try {
-							is.close();
-						} catch (final IOException ignore) {
-							// If we can't close it then there is nothing we can
-							// do and should move on.
-						}
-					}
 				}
 			}
 
-			logger.info("Done with {} at {}", rootDirectory, new Date());
+			logger.info("Done with {} at {}.", rootDirectory, new Date());
 			logger.info("Found {} images.", Integer.valueOf(images.size()));
 		}
 		

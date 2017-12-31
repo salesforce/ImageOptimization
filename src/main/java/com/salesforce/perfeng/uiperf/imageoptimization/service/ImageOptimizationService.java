@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, Salesforce.com, Inc.
+ * Copyright (c) 2017, Salesforce.com, Inc.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without 
@@ -65,6 +65,7 @@ import com.salesforce.perfeng.uiperf.imageoptimization.dto.OptimizationResult;
 import com.salesforce.perfeng.uiperf.imageoptimization.utils.FixedFileUtils;
 import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageFileOptimizationException;
 import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageUtils;
+import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImagesEqual;
 
 /**
  * Service used to perform the optimization of images. This class is Immutable and ThreadSafe.
@@ -96,6 +97,11 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	 */
 	static final String PNG_ERROR_MESSAGE;
 	/**
+	 * Internal error message used when an error occurred while optimizing a PNG
+	 * image.
+	 */
+	static final String SVG_ERROR_MESSAGE;
+	/**
 	 * Internal error message used when an error occurred while converting an 
 	 * image to WEBP.
 	 */
@@ -106,74 +112,77 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		GIF_ERROR_MESSAGE  = String.format(common, "optimizing", IImageOptimizationService.GIF_EXTENSION.toUpperCase());
 		JPEG_ERROR_MESSAGE = String.format(common, "optimizing", IImageOptimizationService.JPEG_EXTENSION.toUpperCase());
 		PNG_ERROR_MESSAGE  = String.format(common, "optimizing", IImageOptimizationService.PNG_EXTENSION.toUpperCase());
+		SVG_ERROR_MESSAGE  = String.format(common, "optimizing", IImageOptimizationService.SVG_EXTENSION.toUpperCase());
 		WEBP_ERROR_MESSAGE = String.format(common, "converting to", IImageOptimizationService.WEBP_EXTENSION.toUpperCase());
 	}
 	
 	/**
-	 * Name of the "cwebp" binary application used to convert a 
-	 * non-{@value IImageOptimizationService#GIF_MIME_TYPE} file to a 
-	 * {@value IImageOptimizationService#WEBP_MIME_TYPE} file.
+	 * Name of the "cwebp" binary application used to convert a non-{@value IImageOptimizationService#GIF_MIME_TYPE}
+	 * file to a {@value IImageOptimizationService#WEBP_MIME_TYPE} file.
 	 */
 	protected static final String CWEBP_BINARY     = "cwebp";
 	/**
-	 * Name of the {@value #GIF2WEBP_BINARY} binary application used to convert 
-	 * a {@value IImageOptimizationService#GIF_MIME_TYPE} file to a 
-	 * {@value IImageOptimizationService#WEBP_MIME_TYPE} file.
+	 * Name of the {@value #GIF2WEBP_BINARY} binary application used to convert a
+	 * {@value IImageOptimizationService#GIF_MIME_TYPE} file to a {@value IImageOptimizationService#WEBP_MIME_TYPE}
+	 * file.
 	 */
 	protected static final String GIF2WEBP_BINARY  = "gif2webp";
 	/**
-	 * Name of the {@value #GIFSICLE_BINARY} binary application used to optimize 
-	 * a {@value IImageOptimizationService#GIF_MIME_TYPE} file.
+	 * Name of the {@value #GIFSICLE_BINARY} binary application used to optimize a
+	 * {@value IImageOptimizationService#GIF_MIME_TYPE} file.
 	 */
 	protected static final String GIFSICLE_BINARY  = "gifsicle";
 	/**
-	 * Name of the {@value #JPEGTRAN_BINARY} binary application used to optimize 
-	 * a {@value IImageOptimizationService#JPEG_MIME_TYPE} file. On linux this 
-	 * app requires libjpeg62 to be installed. Run 
+	 * Name of the {@value #JPEGTRAN_BINARY} binary application used to optimize a
+	 * {@value IImageOptimizationService#JPEG_MIME_TYPE} file. On linux this app requires libjpeg62 to be installed. Run 
 	 * "sudo apt-get install libjpeg62:i386".
 	 */
 	protected static final String JPEGTRAN_BINARY  = "jpegtran";
 	/**
-	 * Name of the {@value #JFIFREMOVE_BINARY} binary application used to 
-	 * optimize a {@value IImageOptimizationService#JPEG_MIME_TYPE} file.
+	 * Name of the {@value #JFIFREMOVE_BINARY} binary application used to optimize a
+	 * {@value IImageOptimizationService#JPEG_MIME_TYPE} file.
 	 */
 	protected static final String JFIFREMOVE_BINARY = "jfifremove";
 	/**
-	 * Name of the {@value #ADVPNG_BINARY} binary application used to optimize 
-	 * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
+	 * Name of the {@value #ADVPNG_BINARY} binary application used to optimize a
+	 * {@value IImageOptimizationService#PNG_MIME_TYPE} file.
 	 */
 	protected static final String ADVPNG_BINARY    = "advpng";
 	/**
-	 * Name of the {@value #OPTIPNG_BINARY} binary application used to optimize 
-	 * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
+	 * Name of the {@value #OPTIPNG_BINARY} binary application used to optimize a
+	 * {@value IImageOptimizationService#PNG_MIME_TYPE} file.
 	 */
 	protected static final String OPTIPNG_BINARY   = "optipng";
 	/**
-	 * Name of the {@value #PNGOUT_BINARY} binary application used to optimize 
-	 * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
+	 * Name of the {@value #PNGOUT_BINARY} binary application used to optimize a
+	 * {@value IImageOptimizationService#PNG_MIME_TYPE} file.
 	 */
 	protected static final String PNGOUT_BINARY    = "pngout";
 	/**
-	 * Name of the {@value #PNGQUANT_BINARY} binary application used to optimize 
-	 * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
+	 * Name of the {@value #PNGQUANT_BINARY} binary application used to optimize a
+	 * {@value IImageOptimizationService#PNG_MIME_TYPE} file.
 	 */
 	protected static final String PNGQUANT_BINARY    = "pngquant";
+	/**
+	 * Name of the {@value #SVGOP_BINARY} binary application used to optimize a
+	 * {@value IImageOptimizationService#SVG_MIME_TYPE} file.
+	 */
+	protected static final String SVGOP_BINARY    = "svgop";
 	
 	/**
-	 * Path of the "cwebp" binary application used to convert a 
-	 * non-{@value IImageOptimizationService#GIF_MIME_TYPE} file to a 
-	 * {@value IImageOptimizationService#WEBP_MIME_TYPE} file.
+	 * Path of the "cwebp" binary application used to convert a non-{@value IImageOptimizationService#GIF_MIME_TYPE}
+	 * file to a {@value IImageOptimizationService#WEBP_MIME_TYPE} file.
 	 */
 	protected final String cwebpBinaryPath;
 	/**
-	 * Path of the {@value #GIF2WEBP_BINARY} binary application used to convert 
-	 * a {@value IImageOptimizationService#GIF_MIME_TYPE} file to a 
-	 * {@value IImageOptimizationService#WEBP_MIME_TYPE} file.
+	 * Path of the {@value #GIF2WEBP_BINARY} binary application used to convert a
+	 * {@value IImageOptimizationService#GIF_MIME_TYPE} file to a {@value IImageOptimizationService#WEBP_MIME_TYPE}
+	 * file.
 	 */
 	protected final String gif2webpBinaryPath;
 	/**
-	 * Path of the {@value #GIFSICLE_BINARY} binary application used to optimize 
-	 * a {@value IImageOptimizationService#GIF_MIME_TYPE} file.
+	 * Path of the {@value #GIFSICLE_BINARY} binary application used to optimize a
+	 * {@value IImageOptimizationService#GIF_MIME_TYPE} file.
 	 */
 	protected final String gifsicleBinaryPath;
 	/**
@@ -187,25 +196,30 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	 */
 	protected final String jfifremoveBinaryPath;
 	/**
-	 * Path of the {@value #ADVPNG_BINARY} binary application used to optimize 
-	 * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
+	 * Path of the {@value #ADVPNG_BINARY} binary application used to optimize a
+	 * {@value IImageOptimizationService#PNG_MIME_TYPE} file.
 	 */
 	protected final String advpngBinaryPath;
 	/**
-	 * Path of the {@value #OPTIPNG_BINARY} binary application used to optimize 
-	 * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
+	 * Path of the {@value #OPTIPNG_BINARY} binary application used to optimize a
+	 * {@value IImageOptimizationService#PNG_MIME_TYPE} file.
 	 */
 	protected final String optipngBinaryPath;
 	/**
-	 * Path of the {@value #PNGOUT_BINARY} binary application used to optimize 
-	 * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
+	 * Path of the {@value #PNGOUT_BINARY} binary application used to optimize a
+	 * {@value IImageOptimizationService#PNG_MIME_TYPE} file.
 	 */
 	protected final String pngoutBinaryPath;
 	/**
-	 * Path of the {@value #PNGQUANT_BINARY} binary application used to optimize 
-	 * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
+	 * Path of the {@value #PNGQUANT_BINARY} binary application used to optimize a
+	 * {@value IImageOptimizationService#PNG_MIME_TYPE} file.
 	 */
 	protected final String pngquantBinaryPath;
+	/**
+	 * Path of the {@value #SVGOP_BINARY} binary application used to optimize a
+	 * {@value IImageOptimizationService#SVG_MIME_TYPE} file.
+	 */
+	protected final String svgopBinaryPath;
 	
 	private final int MAX_NUMBER_OF_THREADS = Runtime.getRuntime().availableProcessors();
 
@@ -269,11 +283,12 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		jpegtranBinaryPath   = binaryDirectoryPath + JPEGTRAN_BINARY;
 		// Needs to be quoted because it is passed as an argument to the bash 
 		// command.
-		jfifremoveBinaryPath = '\"' + binaryDirectoryPath + JFIFREMOVE_BINARY + '\"';
+		jfifremoveBinaryPath = '"' + binaryDirectoryPath + JFIFREMOVE_BINARY + '"';
 		advpngBinaryPath     = binaryDirectoryPath + ADVPNG_BINARY;
 		optipngBinaryPath    = binaryDirectoryPath + OPTIPNG_BINARY;
 		pngoutBinaryPath     = binaryDirectoryPath + PNGOUT_BINARY;
 		pngquantBinaryPath   = binaryDirectoryPath + PNGQUANT_BINARY;
+		svgopBinaryPath      = binaryDirectoryPath + SVGOP_BINARY;
 	}
 	
 	/**
@@ -404,20 +419,29 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 			
 			final List<Future<OptimizationResult<C>>> futures = new ArrayList<>(2);
 			
-			if(PNG_EXTENSION.equals(ext)) {
-				futures.add(completionService.submit(new ExecutePngOptimization(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getCanonicalPath()).toString()), conversionType)));
-				if(includeWebPConversion) {
-					futures.add(completionService.submit(new ExecuteWebpConversion(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(IImageOptimizationService.WEBP_EXTENSION).append(file.getCanonicalPath()).toString()), false)));
-				}
-			} else if(GIF_EXTENSION.equals(ext)) {
-				futures.add(completionService.submit(new ExecuteGifOptimization(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getCanonicalPath()).toString()), conversionType)));
-				if(includeWebPConversion) {
-					futures.add(completionService.submit(new ExecuteWebpConversion(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(IImageOptimizationService.WEBP_EXTENSION).append(file.getCanonicalPath()).toString()), true)));
-				}
-			} else if(JPEG_EXTENSION.equals(ext) || JPEG_EXTENSION2.equals(ext) || JPEG_EXTENSION3.equals(ext)) {
-				futures.add(completionService.submit(new ExecuteJpegOptimization(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getCanonicalPath()).toString()), conversionType)));
-			} else {
-				throw new IllegalArgumentException("The passed in file has an unsupported file extension.");
+			switch(ext) {
+				case PNG_EXTENSION:
+					futures.add(completionService.submit(new ExecutePngOptimization(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getCanonicalPath()).toString()), conversionType)));
+					if(includeWebPConversion) {
+						futures.add(completionService.submit(new ExecuteWebpConversion(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(IImageOptimizationService.WEBP_EXTENSION).append(file.getCanonicalPath()).toString()), false)));
+					}
+					break;
+				case SVG_EXTENSION:
+					futures.add(completionService.submit(new ExecuteSvgOptimization(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getCanonicalPath()).toString()), conversionType)));
+					break;
+				case GIF_EXTENSION:
+					futures.add(completionService.submit(new ExecuteGifOptimization(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getCanonicalPath()).toString()), conversionType)));
+					if(includeWebPConversion) {
+						futures.add(completionService.submit(new ExecuteWebpConversion(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(IImageOptimizationService.WEBP_EXTENSION).append(file.getCanonicalPath()).toString()), true)));
+					}
+					break;
+				case JPEG_EXTENSION:
+				case JPEG_EXTENSION2:
+				case JPEG_EXTENSION3:
+					futures.add(completionService.submit(new ExecuteJpegOptimization(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getCanonicalPath()).toString()), conversionType)));
+					break;
+				default:
+					throw new IllegalArgumentException("The passed in file has an unsupported file extension.");
 			}
 			return futures;
 		} catch (final Exception e) {
@@ -850,9 +874,8 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	}
 
 	/**
-	 * Executes the binary {@value #GIF2WEBP_BINARY} to convert the input file 
-	 * to a smaller file. The resulting image is only supported by Chrome and 
-	 * Opera
+	 * Executes the binary {@value #GIF2WEBP_BINARY} to convert the input file to a smaller file. The resulting image is
+	 * only supported by Chrome and Opera
 	 * 
 	 * @param workingFile The file to convert
 	 * @param workingFilePath The path to the file to convert
@@ -886,6 +909,34 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		}
 
 		return webpFile;
+	}
+	
+	/**
+	 * Executes the binary {@value #SVGOP_BINARY}" to optimize the input file.
+	 * 
+	 * @param workingFile The file to optimize
+	 * @param workingFilePath The path to the file to optimize
+	 * @return the optimized file
+	 * @throws InterruptedException If the optimization was interrupted.
+	 * @throws ThirdPartyBinaryNotFoundException Thrown if the "svgop" application does not exist.
+	 */
+	final File executeSvgop(final File workingFile, final String workingFilePath) throws InterruptedException, ThirdPartyBinaryNotFoundException {
+
+		final Process ps;
+		try {
+			//Can't redirect the Error stream because it is already redirecting 
+			//the output.
+			//ps = new ProcessBuilder("bash", "-c", new StringBuilder(jfifremoveBinaryPath).append(" < ").append(escapedWorkingFilePath).append(" > ").append(escapedWorkingFilePath).append(".tmp2").toString()).start();
+			ps = new ProcessBuilder("bash", "-c", new StringBuilder(svgopBinaryPath).append(" < \"").append(workingFilePath).append("\" > \"").append(workingFilePath).append(".tmp\"").toString()).start();
+		} catch(final IOException ioe) {
+			throw new ThirdPartyBinaryNotFoundException(SVGOP_BINARY, ioe);
+		}
+
+		if(waitFor(ps) != 0) {
+			handleOptimizationFailure(ps, SVGOP_BINARY, workingFile);
+		}
+
+		return new File(workingFilePath + ".tmp");
 	}
 
 	private final class ExecutePngOptimization implements Callable<OptimizationResult<C>> {
@@ -927,7 +978,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 					if(finalFile == null) {
 						return null;
 					}
-					return new OptimizationResult<>(finalFile, finalFile.length(), masterFile, masterFileSize, false, !ImageUtils.visuallyCompare(optimizedFile, masterFile), false);
+					return new OptimizationResult<>(finalFile, finalFile.length(), masterFile, masterFileSize, false, !ImagesEqual.visuallyCompare(optimizedFile, masterFile), false);
 				}
 			} catch(final ThirdPartyBinaryNotFoundException tpbnfe) {
 				throw tpbnfe;
@@ -1001,7 +1052,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 						return null;
 					}
 					
-					return new OptimizationResult<>(finalFile, finalFile.length(), masterFile, masterFileSize, false, !ImageUtils.visuallyCompare(finalFile, masterFile), false);
+					return new OptimizationResult<>(finalFile, finalFile.length(), masterFile, masterFileSize, false, !ImagesEqual.visuallyCompare(finalFile, masterFile), false);
 				}
 			} catch(final ThirdPartyBinaryNotFoundException tpbnfe) {
 				throw tpbnfe;
@@ -1194,7 +1245,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 					}
 					final boolean automatedOptimizationFailed;
 					try {
-						automatedOptimizationFailed = fileTypeChanged ? false : !ImageUtils.visuallyCompare(masterFile, optimizedFile);
+						automatedOptimizationFailed = fileTypeChanged ? false : !ImagesEqual.visuallyCompare(masterFile, optimizedFile);
 					} catch(final ImageFileOptimizationException ifoe) {
 						final Throwable cause = ifoe.getCause();
 						if((cause instanceof NullPointerException) && "getImageTypes".equals(cause.getStackTrace()[0].getMethodName())) {
@@ -1218,6 +1269,64 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 				}
 			}
 
+			return null;
+		}
+	}
+	
+	private final class ExecuteSvgOptimization implements Callable<OptimizationResult<C>> {
+
+		private final File masterFile;
+		private final File workingFile;
+		//TODO Support type conversions
+		private final FileTypeConversion conversionType;
+
+		/**
+		 * @param masterFile The original image
+		 * @param workingFile The copy of the file to optimize
+		 * @param conversionType If and how to handle converting images from one 
+		 *                       type to another.
+		 */
+		public ExecuteSvgOptimization(final File masterFile, final File workingFile, final FileTypeConversion conversionType) {
+			this.workingFile = workingFile;
+			this.masterFile = masterFile;
+			this.conversionType = conversionType;
+		}
+
+		/**
+		 * @see java.util.concurrent.Callable#call()
+		 */
+		@Override
+		public OptimizationResult<C> call() {
+
+			File optimizedFile = null;
+			try {
+				FixedFileUtils.copyFile(masterFile, workingFile);
+
+				optimizedFile = executeSvgop(workingFile, workingFile.getCanonicalPath());
+
+				final long masterFileSize = masterFile.length();
+
+				if(optimizedFile.length() < masterFileSize) {
+					final File finalFile = copyFileToMinifiedDirectory(masterFile, optimizedFile, false);
+					if(finalFile == null) {
+						return null;
+					}
+					
+					return new OptimizationResult<>(finalFile, finalFile.length(), masterFile, masterFileSize, false, !ImagesEqual.visuallyCompare(finalFile, masterFile), false);
+				}
+			} catch(final ThirdPartyBinaryNotFoundException tpbnfe) {
+				throw tpbnfe;
+			} catch (final Exception e) {
+				logger.warn(SVG_ERROR_MESSAGE, new ImageFileOptimizationException(masterFile.getPath(), e));
+			} finally {
+				if(optimizedFile != null) {
+					try {
+						FileUtils.forceDelete(optimizedFile.getParentFile());
+					} catch (final IOException ioe) {
+						logger.warn("Error deleting temp file.", ioe);
+					}
+				}
+			}
 			return null;
 		}
 	}
