@@ -56,8 +56,6 @@ import javax.imageio.ImageIO;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.annotation.Immutable;
-import org.apache.http.annotation.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,14 +66,12 @@ import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageFileOptimizati
 import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageUtils;
 
 /**
- * Service used to perform the optimization of images.
+ * Service used to perform the optimization of images. This class is thread safe.
  * 
  * @author eperret (Eric Perret)
  * @since 186.internal
  * @param <C> Contains the changeList information.
  */
-@Immutable
-@ThreadSafe
 public class ImageOptimizationService<C> implements IImageOptimizationService<C> {
 
 	/**
