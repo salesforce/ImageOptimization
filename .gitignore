@@ -8,3 +8,6 @@
 *.ear
 /bin
 /target
+.classpath
+.settings/**
+

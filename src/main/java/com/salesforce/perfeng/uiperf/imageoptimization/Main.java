@@ -52,7 +52,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.http.annotation.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +67,6 @@ import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageFileOptimizati
  * 
  * @author eperret (Eric Perret)
  */
-@Immutable
 public class Main {
 
 	/**

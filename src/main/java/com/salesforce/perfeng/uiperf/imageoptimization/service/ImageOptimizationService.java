@@ -68,14 +68,12 @@ import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageFileOptimizati
 import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageUtils;
 
 /**
- * Service used to perform the optimization of images.
+ * Service used to perform the optimization of images. This class is threadsafe.
  * 
  * @author eperret (Eric Perret)
  * @since 186.internal
  * @param <C> Contains the changeList information.
  */
-@Immutable
-@ThreadSafe
 public class ImageOptimizationService<C> implements IImageOptimizationService<C> {
 
 	/**
