@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -462,7 +463,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
         try(final StringWriter writer = new StringWriter();
                 final InputStream is      = ps.getInputStream()) {
             try {
-                IOUtils.copy(is, writer);
+                IOUtils.copy(is, writer, StandardCharsets.UTF_8);
                 final StringBuilder errorMessage = new StringBuilder("Optimization failed with edit code: ").append(ps.exitValue()).append(". ").append(writer);
                 if(ps.exitValue() == 127 /* command not found */) {
                     throw new ThirdPartyBinaryNotFoundException(binaryApplicationName, "Most likely this is due to required libraries not being installed on the OS. On Ubuntu run \"sudo apt-get install libjpeg62:i386\".", new RuntimeException(errorMessage.toString()));

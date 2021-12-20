@@ -188,6 +188,7 @@ public class OptimizationResult<C> {
      *
      * @see java.lang.Object#hashCode()
      */
+    @SuppressWarnings("boxing")
     @Override
     public int hashCode() {
         return Objects.hash(failedAutomatedTest, fileTypeChanged, isBrowserSpecific, gusBugId, newChangeList, optimizedFile, optimizedFileSize, originalFile, originalFileSize);
