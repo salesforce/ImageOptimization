@@ -77,7 +77,7 @@ public class Main {
     static {
         final String os = System.getProperty("os.name").toLowerCase();
         if (!"linux".equals(os) && !"mac os x".equals(os)) {
-            throw new UnsupportedOperationException("Your OS is not supported by this application. Currently only linux is supported");
+            throw new UnsupportedOperationException("Your OS is not supported by this application. Currently only Linux and MacOS X are supported");
         }
         IMAGE_OPTIMIZATION_BINARY_LOCATION = System.getProperty("binariesDirectory");
         if ((IMAGE_OPTIMIZATION_BINARY_LOCATION == null) || IMAGE_OPTIMIZATION_BINARY_LOCATION.isEmpty()) {

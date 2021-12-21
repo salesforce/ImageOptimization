@@ -439,12 +439,12 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
         final List<OptimizationResult<C>> masterListOfOptimizedFiles = new ArrayList<>();
         final int numberOfThreads = futures.size();
 
-        for(int i = 0; i < numberOfThreads; i++) {
+        for (int i = 0; i < numberOfThreads; i++) {
             try {
                 if (this.timeoutInSeconds > 0) {
                     final Future<OptimizationResult<C>> f = completionService.poll(this.timeoutInSeconds, TimeUnit.SECONDS);
                     if (f == null) {
-                        for(final Future<OptimizationResult<C>> future : futures) {
+                        for (final Future<OptimizationResult<C>> future : futures) {
                             future.cancel(true);
                         }
                         throw new TimeoutException("Timed out waiting for image to optimize.");
@@ -466,7 +466,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
     private final static void handleOptimizationFailure(final Process ps, final String binaryApplicationName, final File originalFile) throws ThirdPartyBinaryNotFoundException, ImageFileOptimizationException {
 
-        try(final StringWriter writer = new StringWriter();
+        try (final StringWriter writer = new StringWriter();
                 final InputStream is      = ps.getInputStream()) {
             try {
                 IOUtils.copy(is, writer, StandardCharsets.UTF_8);
@@ -478,9 +478,9 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
             } catch (final IOException ioe) {
                 logger.error("Unable to redirect error output for child process for " + originalFile, ioe);
             }
-        } catch(final ThirdPartyBinaryNotFoundException | ImageFileOptimizationException ifoe) {
+        } catch (final ThirdPartyBinaryNotFoundException | ImageFileOptimizationException ifoe) {
             throw ifoe;
-        } catch(final Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -519,7 +519,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
         final long time = System.nanoTime();
 
         final ArrayList<Future<OptimizationResult<C>>> futures = new ArrayList<>();
-        for(final File file : files) {
+        for (final File file : files) {
             futures.addAll(submitExecuteOptimization(completionService, file, new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar).append("scratch").append(time).append(i), conversionType, includeWebPConversion));
             i++;
         }
@@ -558,7 +558,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
     private static final int waitFor(final Process ps) throws InterruptedException {
         try {
             return ps.waitFor();
-        } catch(final InterruptedException ie) {
+        } catch (final InterruptedException ie) {
             ps.destroy();
             throw ie;
         }
@@ -582,7 +582,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
             ps = new ProcessBuilder(List.of(advpngBinaryPath, "-z", "-4", workingFilePath))
                 .redirectErrorStream(true)
                 .start();
-        } catch(final IOException ioe) {
+        } catch (final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(ADVPNG_BINARY, ioe);
         }
 
@@ -615,7 +615,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
                 .directory(workingFile.getParentFile())
                 .redirectErrorStream(true)
                 .start();
-        } catch(final IOException ioe) {
+        } catch (final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(PNGOUT_BINARY, ioe);
         }
 
@@ -655,7 +655,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
                 .directory(workingFile.getParentFile())
                 .redirectErrorStream(true)
                 .start();
-        } catch(final IOException ioe) {
+        } catch (final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(PNGQUANT_BINARY, ioe);
         }
 
@@ -705,7 +705,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
             ps = new ProcessBuilder(List.of(optipngBinaryPath, "-o7", "-zm1-9", workingFilePath))
                 .redirectErrorStream(true)
                 .start();
-        } catch(final IOException ioe) {
+        } catch (final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(OPTIPNG_BINARY, ioe);
         }
         if (waitFor(ps) != 0) {
@@ -733,7 +733,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
             ps = new ProcessBuilder(List.of(jpegtranBinaryPath, "-copy", "none", "-optimize", "-outfile", workingFilePath + ".tmp", workingFilePath))
                 .redirectErrorStream(true)
                 .start();
-        } catch(final IOException ioe) {
+        } catch (final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(JPEGTRAN_BINARY, ioe);
         }
 
@@ -769,7 +769,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
             //the output.
             ps = new ProcessBuilder(List.of("bash", "-c", jfifremoveBinaryPath + " < \"" + workingFilePath + "\" > \"" + workingFilePath + ".tmp2\""))
                 .start();
-        } catch(final IOException ioe) {
+        } catch (final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(JFIFREMOVE_BINARY, ioe);
         }
 
@@ -798,7 +798,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
             ps = new ProcessBuilder(List.of(gifsicleBinaryPath, "-O3", workingFilePath, "-o", workingFilePath + ".tmp"))
                 .redirectErrorStream(true)
                 .start();
-        } catch(final IOException ioe) {
+        } catch (final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(GIFSICLE_BINARY, ioe);
         }
 
@@ -835,7 +835,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
             ps = new ProcessBuilder(List.of(cwebpBinaryPath, workingFilePath, "-lossless", "-m", "6", "-o", webpFilePath))
                 .redirectErrorStream(true)
                 .start();
-        } catch(final IOException ioe) {
+        } catch (final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(CWEBP_BINARY, ioe);
         }
 
@@ -872,7 +872,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
             ps = new ProcessBuilder(List.of(gif2webpBinaryPath, workingFilePath, "-m", "6", "-o", webpFilePath))
                 .redirectErrorStream(true)
                 .start();
-        } catch(final IOException ioe) {
+        } catch (final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(GIF2WEBP_BINARY, ioe);
         }
 
@@ -929,7 +929,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
                     }
                     return new OptimizationResult<>(finalFile, finalFile.length(), masterFile, masterFileSize, false, !ImageUtils.visuallyCompare(optimizedFile, masterFile), false);
                 }
-            } catch(final ThirdPartyBinaryNotFoundException tpbnfe) {
+            } catch (final ThirdPartyBinaryNotFoundException tpbnfe) {
                 throw tpbnfe;
             } catch (final Exception e) {
                 logger.warn(PNG_ERROR_MESSAGE, new ImageFileOptimizationException(masterFile.getPath(), e));
@@ -1003,7 +1003,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
                     return new OptimizationResult<>(finalFile, finalFile.length(), masterFile, masterFileSize, false, !ImageUtils.visuallyCompare(finalFile, masterFile), false);
                 }
-            } catch(final ThirdPartyBinaryNotFoundException tpbnfe) {
+            } catch (final ThirdPartyBinaryNotFoundException tpbnfe) {
                 throw tpbnfe;
             } catch (final Exception e) {
                 logger.warn(JPEG_ERROR_MESSAGE, new ImageFileOptimizationException(masterFile.getPath(), e));
@@ -1066,7 +1066,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
                         return new OptimizationResult<>(finalFile, finalFile.length(), masterFile, masterFileSize, true, false, true);
                     }
                 }
-            } catch(final ThirdPartyBinaryNotFoundException tpbnfe) {
+            } catch (final ThirdPartyBinaryNotFoundException tpbnfe) {
                 throw tpbnfe;
             } catch (final Exception e) {
                 logger.warn(WEBP_ERROR_MESSAGE, new ImageFileOptimizationException(masterFile.getPath(), e));
@@ -1129,7 +1129,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
                 boolean answer;
                 try {
                     answer = isFileTypeConversionEnabled(optimizedFile);
-                } catch(final Exception e) {
+                } catch (final Exception e) {
                     logger.debug("The image must be corrupted. Ignoring the error.", e);
                     answer = false;
                 }
@@ -1144,7 +1144,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
                         //First try optimizing the PNG version of the optimized GIF
                         ImageIO.write(ImageIO.read(optimizedFile), PNG_EXTENSION, workingFilePng);
                         optimizedFilePng = new ExecutePngOptimization(workingFilePng, workingFilePng, conversionType).executeOptimization();
-                    } catch(final Exception e) {
+                    } catch (final Exception e) {
                         logger.debug("Unable to convert optimized GIF to PNG. Ignoring.", new ImageFileOptimizationException(optimizedFile.getPath(), e));
                         imageUtils.convertImageNative(optimizedFile, workingFilePng);
                     }
@@ -1153,7 +1153,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
                         //First try optimizing the PNG version of the optimized GIF
                         ImageIO.write(ImageIO.read(workingFile), PNG_EXTENSION, workingFilePng2);
                         optimizedFilePng = new ExecutePngOptimization(workingFilePng2, workingFilePng2, conversionType).executeOptimization();
-                    } catch(final Exception e) {
+                    } catch (final Exception e) {
                         logger.debug("Unable to convert optimized GIF to PNG. Ignoring.", new ImageFileOptimizationException(workingFile.getPath(), e));
                         imageUtils.convertImageNative(workingFile, workingFilePng2);
                     }
@@ -1188,7 +1188,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
                     final boolean automatedOptimizationFailed;
                     try {
                         automatedOptimizationFailed = fileTypeChanged ? false : !ImageUtils.visuallyCompare(masterFile, optimizedFile);
-                    } catch(final ImageFileOptimizationException ifoe) {
+                    } catch (final ImageFileOptimizationException ifoe) {
                         final Throwable cause = ifoe.getCause();
                         if ((cause instanceof NullPointerException) && "getImageTypes".equals(cause.getStackTrace()[0].getMethodName())) {
                             logger.debug("The optimized image is corrupted and could not be read.", ifoe);
@@ -1199,7 +1199,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
                     return new OptimizationResult<>(finalFile, finalFile.length(), masterFile, masterFileSize, fileTypeChanged, automatedOptimizationFailed, false);
                 }
-            } catch(final ThirdPartyBinaryNotFoundException tpbnfe) {
+            } catch (final ThirdPartyBinaryNotFoundException tpbnfe) {
                 throw tpbnfe;
             } catch (final Exception e) {
                 logger.warn(GIF_ERROR_MESSAGE, new ImageFileOptimizationException(masterFile.getPath(), e));
