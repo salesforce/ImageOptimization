@@ -157,7 +157,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
      * Name of the {@value #PNGQUANT_BINARY} binary application used to optimize
      * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
      */
-    protected static final String PNGQUANT_BINARY    = "pngquant";
+    protected static final String PNGQUANT_BINARY  = "pngquant";
 
     /**
      * Path of the "cwebp" binary application used to convert a
@@ -206,6 +206,11 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
      * a {@value IImageOptimizationService#PNG_MIME_TYPE} file.
      */
     protected final String pngquantBinaryPath;
+    
+    /**
+     * Instance of the {@link ImageUtils}.
+     */
+    final ImageUtils imageUtils;
 
     private final int MAX_NUMBER_OF_THREADS = Runtime.getRuntime().availableProcessors();
 
@@ -246,14 +251,14 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
      * @see #ImageOptimizationService(File, File, String)
      */
     public ImageOptimizationService(final File tmpWorkingDirectory, final File binaryDirectory, final int timeoutInSeconds) throws IOException {
-        if(tmpWorkingDirectory == null) {
+        if (tmpWorkingDirectory == null) {
             throw new IllegalArgumentException("The passed in tmpWorkingDirectory needs to exist.");
         }
-        if(binaryDirectory == null) {
+        if (binaryDirectory == null) {
             throw new IllegalArgumentException("The passed in binaryDirectory needs to exist.");
-        }  else if(!tmpWorkingDirectory.isDirectory()) {
+        } else if (!tmpWorkingDirectory.isDirectory()) {
             throw new IllegalArgumentException("The passed in tmpWorkingDirectory, \"" + tmpWorkingDirectory.getCanonicalPath() + "\", needs to be a directory.");
-        } else if(!binaryDirectory.isDirectory()) {
+        } else if (!binaryDirectory.isDirectory()) {
             throw new IllegalArgumentException("The passed in binaryDirectory , \"" + binaryDirectory.getCanonicalPath() + "\", needs to exist and be a directory.");
         }
         this.tmpWorkingDirectory = tmpWorkingDirectory.getCanonicalFile();
@@ -275,6 +280,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
         optipngBinaryPath    = binaryDirectoryPath + OPTIPNG_BINARY;
         pngoutBinaryPath     = binaryDirectoryPath + PNGOUT_BINARY;
         pngquantBinaryPath   = binaryDirectoryPath + PNGQUANT_BINARY;
+        imageUtils = new ImageUtils(binaryDirectoryPath);
     }
 
     /**
@@ -336,7 +342,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
      * @see ImageOptimizationService#ImageOptimizationService(File, File, int)
      */
     public final static <C> ImageOptimizationService<C> createInstance(final String pathToBinaryProgramsForImageOptimizationDirectory, final int timeoutInSeconds) throws IOException {
-        if(logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             logger.debug("Current local directory is: {}", new File(".").getCanonicalPath());
         }
 
@@ -363,10 +369,10 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
         final StringBuilder sb = new StringBuilder(finalWorkingDirectoryPath);
 
-        if(fileTypeChanged) {
+        if (fileTypeChanged) {
             final StringBuilder newFilePath = new StringBuilder(FilenameUtils.removeExtension(masterFile.getAbsolutePath())).append('.').append(FilenameUtils.getExtension(workingFile.getName()));
-            if(new File(newFilePath.toString()).exists()) {
-                if(logger.isInfoEnabled()) {
+            if (new File(newFilePath.toString()).exists()) {
+                if (logger.isInfoEnabled()) {
                     logger.info("Returning null because file extension changed and the new file already exists.\n\tmasterFile: {}\n\tworkingFile: {}\n\tfileTypeChanged: {}", masterFile.getCanonicalPath(), workingFile.getCanonicalPath(), Boolean.valueOf(fileTypeChanged));
                 }
                 return null;
@@ -377,8 +383,8 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
         }
 
         final File minifiedFile = new File(sb.toString());
-        if(minifiedFile.exists()) {
-            if(logger.isWarnEnabled()) {
+        if (minifiedFile.exists()) {
+            if (logger.isWarnEnabled()) {
                 logger.warn("Returning null, file already exists at {}\n\tmasterFile: {}\n\tworkingFile: {}\n\tfileTypeChanged: {}", minifiedFile.getCanonicalPath(), masterFile.getCanonicalPath(), workingFile.getCanonicalPath(), Boolean.valueOf(fileTypeChanged));
             }
             return null;
@@ -405,17 +411,17 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
             final List<Future<OptimizationResult<C>>> futures = new ArrayList<>(2);
 
-            if(PNG_EXTENSION.equals(ext)) {
+            if (PNG_EXTENSION.equals(ext)) {
                 futures.add(completionService.submit(new ExecutePngOptimization(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getCanonicalPath()).toString()), conversionType)));
-                if(includeWebPConversion) {
+                if (includeWebPConversion) {
                     futures.add(completionService.submit(new ExecuteWebpConversion(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(IImageOptimizationService.WEBP_EXTENSION).append(file.getCanonicalPath()).toString()), false)));
                 }
-            } else if(GIF_EXTENSION.equals(ext)) {
+            } else if (GIF_EXTENSION.equals(ext)) {
                 futures.add(completionService.submit(new ExecuteGifOptimization(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getCanonicalPath()).toString()), conversionType)));
-                if(includeWebPConversion) {
+                if (includeWebPConversion) {
                     futures.add(completionService.submit(new ExecuteWebpConversion(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(IImageOptimizationService.WEBP_EXTENSION).append(file.getCanonicalPath()).toString()), true)));
                 }
-            } else if(JPEG_EXTENSION.equals(ext) || JPEG_EXTENSION2.equals(ext) || JPEG_EXTENSION3.equals(ext)) {
+            } else if (JPEG_EXTENSION.equals(ext) || JPEG_EXTENSION2.equals(ext) || JPEG_EXTENSION3.equals(ext)) {
                 futures.add(completionService.submit(new ExecuteJpegOptimization(file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getCanonicalPath()).toString()), conversionType)));
             } else {
                 throw new IllegalArgumentException("The passed in file has an unsupported file extension.");
@@ -435,9 +441,9 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
         for(int i = 0; i < numberOfThreads; i++) {
             try {
-                if(this.timeoutInSeconds > 0) {
+                if (this.timeoutInSeconds > 0) {
                     final Future<OptimizationResult<C>> f = completionService.poll(this.timeoutInSeconds, TimeUnit.SECONDS);
-                    if(f == null) {
+                    if (f == null) {
                         for(final Future<OptimizationResult<C>> future : futures) {
                             future.cancel(true);
                         }
@@ -447,7 +453,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
                 } else {
                     optimizationResult = completionService.take().get();
                 }
-                if(optimizationResult != null) {
+                if (optimizationResult != null) {
                     logger.info(optimizationResult.toString());
                     masterListOfOptimizedFiles.add(optimizationResult);
                 }
@@ -465,7 +471,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
             try {
                 IOUtils.copy(is, writer, StandardCharsets.UTF_8);
                 final StringBuilder errorMessage = new StringBuilder("Optimization failed with edit code: ").append(ps.exitValue()).append(". ").append(writer);
-                if(ps.exitValue() == 127 /* command not found */) {
+                if (ps.exitValue() == 127 /* command not found */) {
                     throw new ThirdPartyBinaryNotFoundException(binaryApplicationName, "Most likely this is due to required libraries not being installed on the OS. On Ubuntu run \"sudo apt-get install libjpeg62:i386\".", new RuntimeException(errorMessage.toString()));
                 }
                 throw ImageFileOptimizationException.getInstance(originalFile, new RuntimeException(errorMessage.toString()));
@@ -502,7 +508,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
      */
     @Override
     public List<OptimizationResult<C>> optimizeAllImages(final FileTypeConversion conversionType, final boolean includeWebPConversion, final Collection<File> files) throws ImageFileOptimizationException, TimeoutException {
-        if((files == null) || files.isEmpty()) {
+        if ((files == null) || files.isEmpty()) {
             return Collections.emptyList();
         }
 
@@ -573,16 +579,16 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
         final Process ps;
         try {
-            final ProcessBuilder pb = new ProcessBuilder(advpngBinaryPath, "-z", "-4", workingFilePath);
-            pb.redirectErrorStream(true);
-            ps = pb.start();
+            ps = new ProcessBuilder(advpngBinaryPath, "-z", "-4", workingFilePath)
+                .redirectErrorStream(true)
+                .start();
         } catch(final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(ADVPNG_BINARY, ioe);
         }
 
         waitFor(ps);
 
-        if(ps.exitValue() != 0) {
+        if (ps.exitValue() != 0) {
             handleOptimizationFailure(ps, ADVPNG_BINARY, workingFile);
         }
         return workingFile;
@@ -605,22 +611,22 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
         try {
             // Slightly different from the other binary calls because PNG out
             // displays an error when long file paths are used.
-            final ProcessBuilder pb = new ProcessBuilder(pngoutBinaryPath, workingFile.getName(), workingFile.getName(), "-y");
-            pb.directory(workingFile.getParentFile());
-            pb.redirectErrorStream(true);
-            ps = pb.start();
+            ps = new ProcessBuilder(pngoutBinaryPath, workingFile.getName(), workingFile.getName(), "-y")
+                .directory(workingFile.getParentFile())
+                .redirectErrorStream(true)
+                .start();
         } catch(final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(PNGOUT_BINARY, ioe);
         }
 
         waitFor(ps);
-        if((ps.exitValue() != 0) && (ps.exitValue() != 2)) {
+        if ((ps.exitValue() != 0) && (ps.exitValue() != 2)) {
             handleOptimizationFailure(ps, PNGOUT_BINARY, workingFile);
         } else {
             final File newFile = new File(workingFilePath + "." + PNG_EXTENSION);
-            if(newFile.exists()) {
+            if (newFile.exists()) {
                 workingFile.delete();
-                if(!newFile.renameTo(workingFile)) {
+                if (!newFile.renameTo(workingFile)) {
                     logger.warn("Optimization failed to copy file. Moving on with the test.", ImageFileOptimizationException.getInstance(workingFile, "Optimization failed to copy file. Moving on with the test."));
                 }
             }
@@ -645,10 +651,10 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
         try {
             // Slightly different from the other binary calls because PNG out
             // displays an error when long file paths are used.
-            final ProcessBuilder pb = new ProcessBuilder(pngquantBinaryPath, "--quality=100-100", "-s1", "--ext", ".png2", "--force", "--", workingFile.getName());
-            pb.directory(workingFile.getParentFile());
-            pb.redirectErrorStream(true);
-            ps = pb.start();
+            ps = new ProcessBuilder(pngquantBinaryPath, "--quality=100-100", "-s1", "--ext", ".png2", "--force", "--", workingFile.getName())
+                .directory(workingFile.getParentFile())
+                .redirectErrorStream(true)
+                .start();
         } catch(final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(PNGQUANT_BINARY, ioe);
         }
@@ -657,18 +663,18 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
         // If conversion results in quality below the min quality the image
         // won't be saved and pngquant will exit with status code 99.
-        if(ps.exitValue() != 99) {
-            if(ps.exitValue() != 0) {
+        if (ps.exitValue() != 99) {
+            if (ps.exitValue() != 0) {
                 handleOptimizationFailure(ps, PNGQUANT_BINARY, workingFile);
             }
             final File newFile;
-            if(IImageOptimizationService.PNG_EXTENSION.equalsIgnoreCase(FilenameUtils.getExtension(workingFile.getName()))) {
+            if (IImageOptimizationService.PNG_EXTENSION.equalsIgnoreCase(FilenameUtils.getExtension(workingFile.getName()))) {
                 newFile = new File(workingFilePath + '2');
             } else {
                 newFile = new File(workingFilePath + ".png2");
             }
 
-            if(workingFile.length() > newFile.length()) {
+            if (workingFile.length() > newFile.length()) {
                 try {
                     Files.move(newFile.toPath(), workingFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 } catch (final IOException ioe) {
@@ -696,13 +702,13 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
         final Process ps;
         try {
-            final ProcessBuilder pb = new ProcessBuilder(optipngBinaryPath, "-zc9", "-zm8-9", "-zs0-3", "-f0-5", "-zw", "32k", workingFilePath);
-            pb.redirectErrorStream(true);
-            ps = pb.start();
+            ps = new ProcessBuilder(optipngBinaryPath, "-o7", "-zm1-9", workingFilePath)
+                .redirectErrorStream(true)
+                .start();
         } catch(final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(OPTIPNG_BINARY, ioe);
         }
-        if(waitFor(ps) != 0) {
+        if (waitFor(ps) != 0) {
             handleOptimizationFailure(ps, OPTIPNG_BINARY, workingFile);
         }
 
@@ -724,16 +730,16 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
         final Process ps;
         try {
-            final ProcessBuilder pb = new ProcessBuilder(jpegtranBinaryPath, "-copy", "none", "-optimize", "-outfile", workingFilePath + ".tmp", workingFilePath);
-            pb.redirectErrorStream(true);
-            ps = pb.start();
+            ps = new ProcessBuilder(jpegtranBinaryPath, "-copy", "none", "-optimize", "-outfile", workingFilePath + ".tmp", workingFilePath)
+                .redirectErrorStream(true)
+                .start();
         } catch(final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(JPEGTRAN_BINARY, ioe);
         }
 
-        if(waitFor(ps) == 0) {
+        if (waitFor(ps) == 0) {
             final File tmpFile = new File(workingFilePath + ".tmp");
-            if(tmpFile.length() < workingFile.length()) {
+            if (tmpFile.length() < workingFile.length()) {
                 return tmpFile;
             }
         } else {
@@ -761,13 +767,13 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
         try {
             //Can't redirect the Error stream because it is already redirecting
             //the output.
-            //ps = new ProcessBuilder("bash", "-c", new StringBuilder(jfifremoveBinaryPath).append(" < ").append(escapedWorkingFilePath).append(" > ").append(escapedWorkingFilePath).append(".tmp2").toString()).start();
-            ps = new ProcessBuilder("bash", "-c", new StringBuilder(jfifremoveBinaryPath).append(" < \"").append(workingFilePath).append("\" > \"").append(workingFilePath).append(".tmp2\"").toString()).start();
+            ps = new ProcessBuilder("bash", "-c", jfifremoveBinaryPath + " < \"" + workingFilePath + "\" > \"" + workingFilePath + ".tmp2\"")
+                .start();
         } catch(final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(JFIFREMOVE_BINARY, ioe);
         }
 
-        if(waitFor(ps) != 0) {
+        if (waitFor(ps) != 0) {
             handleOptimizationFailure(ps, JFIFREMOVE_BINARY, workingFile);
         }
 
@@ -789,20 +795,20 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
         final Process ps;
         try {
-            final ProcessBuilder pb = new ProcessBuilder(gifsicleBinaryPath, "-O3", workingFilePath, "-o", workingFilePath + ".tmp");
-            pb.redirectErrorStream(true);
-            ps = pb.start();
+            ps = new ProcessBuilder(gifsicleBinaryPath, "-O3", workingFilePath, "-o", workingFilePath + ".tmp")
+                .redirectErrorStream(true)
+                .start();
         } catch(final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(GIFSICLE_BINARY, ioe);
         }
 
-        if(waitFor(ps) == 1) {
+        if (waitFor(ps) == 1) {
             final File tmpFile = new File(workingFilePath + ".tmp");
-            if(tmpFile.exists()) {
+            if (tmpFile.exists()) {
                 return tmpFile;
             }
             handleOptimizationFailure(ps, GIFSICLE_BINARY, workingFile);
-        } else if(ps.exitValue() != 0) {
+        } else if (ps.exitValue() != 0) {
             handleOptimizationFailure(ps, GIFSICLE_BINARY, workingFile);
         }
 
@@ -826,17 +832,17 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
         final Process ps;
         try {
-            final ProcessBuilder pb = new ProcessBuilder(cwebpBinaryPath, workingFilePath, "-lossless", "-m", "6", "-o", webpFilePath);
-            pb.redirectErrorStream(true);
-            ps = pb.start();
+            ps = new ProcessBuilder(cwebpBinaryPath, workingFilePath, "-lossless", "-m", "6", "-o", webpFilePath)
+                .redirectErrorStream(true)
+                .start();
         } catch(final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(CWEBP_BINARY, ioe);
         }
 
         File webpFile = null;
-        if(waitFor(ps) == 0) {
+        if (waitFor(ps) == 0) {
             webpFile = new File(webpFilePath);
-            if(webpFile.exists()) {
+            if (webpFile.exists()) {
                 return webpFile;
             }
         }
@@ -863,17 +869,17 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
         final Process ps;
         try {
-            final ProcessBuilder pb = new ProcessBuilder(gif2webpBinaryPath, workingFilePath, "-m", "6", "-o", webpFilePath);
-            pb.redirectErrorStream(true);
-            ps = pb.start();
+            ps = new ProcessBuilder(gif2webpBinaryPath, workingFilePath, "-m", "6", "-o", webpFilePath)
+                .redirectErrorStream(true)
+                .start();
         } catch(final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(GIF2WEBP_BINARY, ioe);
         }
 
         File webpFile = null;
-        if(waitFor(ps) == 0) {
+        if (waitFor(ps) == 0) {
             webpFile = new File(webpFilePath);
-            if(webpFile.exists()) {
+            if (webpFile.exists()) {
                 return webpFile;
             }
         }
@@ -915,10 +921,10 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
                 final long masterFileSize = masterFile.length();
 
-                if(optimizedFile.length() < masterFileSize) {
+                if (optimizedFile.length() < masterFileSize) {
 
                     final File finalFile = copyFileToMinifiedDirectory(masterFile, optimizedFile, false);
-                    if(finalFile == null) {
+                    if (finalFile == null) {
                         return null;
                     }
                     return new OptimizationResult<>(finalFile, finalFile.length(), masterFile, masterFileSize, false, !ImageUtils.visuallyCompare(optimizedFile, masterFile), false);
@@ -928,7 +934,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
             } catch (final Exception e) {
                 logger.warn(PNG_ERROR_MESSAGE, new ImageFileOptimizationException(masterFile.getPath(), e));
             } finally {
-                if(optimizedFile != null) {
+                if (optimizedFile != null) {
                     try {
                         FileUtils.forceDelete(optimizedFile.getParentFile());
                     } catch (final IOException ioe) {
@@ -989,9 +995,9 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
                 final long masterFileSize = masterFile.length();
 
-                if(optimizedFile.length() < masterFileSize) {
+                if (optimizedFile.length() < masterFileSize) {
                     final File finalFile = copyFileToMinifiedDirectory(masterFile, optimizedFile, false);
-                    if(finalFile == null) {
+                    if (finalFile == null) {
                         return null;
                     }
 
@@ -1002,7 +1008,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
             } catch (final Exception e) {
                 logger.warn(JPEG_ERROR_MESSAGE, new ImageFileOptimizationException(masterFile.getPath(), e));
             } finally {
-                if(optimizedFile != null) {
+                if (optimizedFile != null) {
                     try {
                         FileUtils.forceDelete(optimizedFile.getParentFile());
                     } catch (final IOException ioe) {
@@ -1046,15 +1052,15 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
             try {
                 FixedFileUtils.copyFile(masterFile, workingFile);
 
-                if(!isGif || !ImageUtils.isAminatedGif(workingFile)) {
+                if (!isGif || !ImageUtils.isAminatedGif(workingFile)) {
 
                     optimizedFile = isGif ? executeGif2Webp(workingFile, workingFile.getCanonicalPath()) : executeCWebp(workingFile, workingFile.getCanonicalPath());
 
                     final long masterFileSize = masterFile.length();
 
-                    if(optimizedFile.length() < masterFileSize) {
+                    if (optimizedFile.length() < masterFileSize) {
                         final File finalFile = copyFileToMinifiedDirectory(masterFile, optimizedFile, true);
-                        if(finalFile == null) {
+                        if (finalFile == null) {
                             return null;
                         }
                         return new OptimizationResult<>(finalFile, finalFile.length(), masterFile, masterFileSize, true, false, true);
@@ -1065,7 +1071,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
             } catch (final Exception e) {
                 logger.warn(WEBP_ERROR_MESSAGE, new ImageFileOptimizationException(masterFile.getPath(), e));
             } finally {
-                if(optimizedFile != null) {
+                if (optimizedFile != null) {
                     try {
                         FileUtils.forceDelete(optimizedFile.getParentFile());
                     } catch (final IOException ioe) {
@@ -1097,8 +1103,8 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
         }
 
         private boolean isFileTypeConversionEnabled(final File optimizedFile) {
-            if(FileTypeConversion.isEnabled(conversionType) && !ImageUtils.isAminatedGif(optimizedFile)) {
-                if((conversionType == FileTypeConversion.IE6SAFE) && !ImageUtils.containsAlphaTransparency(optimizedFile)) {
+            if (FileTypeConversion.isEnabled(conversionType) && !ImageUtils.isAminatedGif(optimizedFile)) {
+                if ((conversionType == FileTypeConversion.IE6SAFE) && !ImageUtils.containsAlphaTransparency(optimizedFile)) {
                     return true;
                 }
                 return (conversionType == FileTypeConversion.ALL);
@@ -1128,7 +1134,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
                     answer = false;
                 }
 
-                if(answer) {
+                if (answer) {
 
                     final File workingFilePng = new File(FilenameUtils.removeExtension(workingFile.getCanonicalPath()) + "." + PNG_EXTENSION);
                     final File workingFilePng2 = new File(FilenameUtils.removeExtension(workingFile.getCanonicalPath()) + ".2" + PNG_EXTENSION);
@@ -1140,7 +1146,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
                         optimizedFilePng = new ExecutePngOptimization(workingFilePng, workingFilePng, conversionType).executeOptimization();
                     } catch(final Exception e) {
                         logger.debug("Unable to convert optimized GIF to PNG. Ignoring.", new ImageFileOptimizationException(optimizedFile.getPath(), e));
-                        ImageUtils.convertImageNative(optimizedFile, workingFilePng);
+                        imageUtils.convertImageNative(optimizedFile, workingFilePng);
                     }
 
                     try {
@@ -1149,34 +1155,34 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
                         optimizedFilePng = new ExecutePngOptimization(workingFilePng2, workingFilePng2, conversionType).executeOptimization();
                     } catch(final Exception e) {
                         logger.debug("Unable to convert optimized GIF to PNG. Ignoring.", new ImageFileOptimizationException(workingFile.getPath(), e));
-                        ImageUtils.convertImageNative(workingFile, workingFilePng2);
+                        imageUtils.convertImageNative(workingFile, workingFilePng2);
                     }
 
                     final File optimizedFilePng2 = new ExecutePngOptimization(workingFilePng2, workingFilePng2, conversionType).executeOptimization();
 
-                    if((optimizedFilePng == null) || (optimizedFilePng.length() > optimizedFilePng2.length())) {
+                    if ((optimizedFilePng == null) || (optimizedFilePng.length() > optimizedFilePng2.length())) {
                         workingFilePng.delete();
-                        if(!optimizedFilePng2.renameTo(workingFilePng)) {
+                        if (!optimizedFilePng2.renameTo(workingFilePng)) {
                             throw ImageFileOptimizationException.getInstance(workingFilePng, (Throwable)null);
                         }
                     } else {
                         workingFilePng.delete();
-                        if(!optimizedFilePng.renameTo(workingFilePng)) {
+                        if (!optimizedFilePng.renameTo(workingFilePng)) {
                             throw ImageFileOptimizationException.getInstance(workingFilePng, (Throwable)null);
                         }
                     }
                     optimizedFilePng = workingFilePng;
 
-                    if(optimizedFilePng.length() < optimizedFile.length()) {
+                    if (optimizedFilePng.length() < optimizedFile.length()) {
                         fileTypeChanged = true;
                         optimizedFile = optimizedFilePng;
                     }
                 }
 
                 final long masterFileSize = masterFile.length();
-                if(optimizedFile.length() < masterFileSize) {
+                if (optimizedFile.length() < masterFileSize) {
                     final File finalFile = copyFileToMinifiedDirectory(masterFile, optimizedFile, fileTypeChanged);
-                    if(finalFile == null) {
+                    if (finalFile == null) {
                         return null;
                     }
                     final boolean automatedOptimizationFailed;
@@ -1184,7 +1190,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
                         automatedOptimizationFailed = fileTypeChanged ? false : !ImageUtils.visuallyCompare(masterFile, optimizedFile);
                     } catch(final ImageFileOptimizationException ifoe) {
                         final Throwable cause = ifoe.getCause();
-                        if((cause instanceof NullPointerException) && "getImageTypes".equals(cause.getStackTrace()[0].getMethodName())) {
+                        if ((cause instanceof NullPointerException) && "getImageTypes".equals(cause.getStackTrace()[0].getMethodName())) {
                             logger.debug("The optimized image is corrupted and could not be read.", ifoe);
                             return null;
                         }

@@ -27,12 +27,9 @@
  ******************************************************************************/
 package com.salesforce.perfeng.uiperf.imageoptimization;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
 
-import com.salesforce.perfeng.uiperf.imageoptimization.service.ImageOptimizationServiceTest;
-import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageUtilsTest;
+import org.junit.platform.suite.api.SelectPackages;
+import org.junit.platform.suite.api.Suite;
 
 /**
  * Test Suite for the ImageOptimization project
@@ -40,8 +37,9 @@ import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageUtilsTest;
  * @author eperret (Eric Perret)
  * @since 188.internal
  */
-@RunWith(Suite.class)
-@SuiteClasses({ ImageOptimizationServiceTest.class, ImageUtilsTest.class})
+@SelectPackages({"com.salesforce.perfeng.uiperf.imageoptimization.service",
+    "com.salesforce.perfeng.uiperf.imageoptimization.utils"})
+@Suite
 public class AllTests {
     //Nothing is needed in here.
 }

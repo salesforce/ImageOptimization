@@ -42,7 +42,7 @@ public class FixedFileUtils {
             throw new IOException("Destination '" + destFile + "' exists but is a directory");
         }
 
-        try(final FileInputStream fis = new FileInputStream(srcFile);
+        try (final FileInputStream fis = new FileInputStream(srcFile);
                 final FileOutputStream fos = new FileOutputStream(destFile);
                 final FileChannel input = fis.getChannel();
                 final  FileChannel output = fos.getChannel()) {

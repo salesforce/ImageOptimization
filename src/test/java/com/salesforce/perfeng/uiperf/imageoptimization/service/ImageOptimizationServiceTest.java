@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, Salesforce.com, Inc.
+ * Copyright (c) 2021, Salesforce.com, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,11 +28,18 @@
 package com.salesforce.perfeng.uiperf.imageoptimization.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.Matchers.aMapWithSize;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.io.FileMatchers.aFileWithSize;
+import static org.hamcrest.io.FileMatchers.anExistingFile;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,19 +49,23 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Test;
+import org.hamcrest.io.FileMatchers;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.salesforce.perfeng.uiperf.imageoptimization.dto.OptimizationResult;
 import com.salesforce.perfeng.uiperf.imageoptimization.service.IImageOptimizationService.FileTypeConversion;
 import com.salesforce.perfeng.uiperf.imageoptimization.utils.FixedFileUtils;
 import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageFileOptimizationException;
 import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageUtils;
+import com.salesforce.perfeng.uiperf.imageoptimization.utils.ProcessUtil;
 
 /**
  * Test for {@link ImageOptimizationService}.
@@ -65,13 +76,7 @@ import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageUtils;
 public class ImageOptimizationServiceTest {
 
     private static final String WEBP_ID = "|webp";
-    private static final String DEFAULT_BINARY_APP_LOCATION;
-    static {
-        if (!"linux".equals(System.getProperty("os.name").toLowerCase())) {
-            throw new UnsupportedOperationException("Your OS is not supported by this application. Currently only linux is supported");
-        }
-        DEFAULT_BINARY_APP_LOCATION = "./lib/binary/linux/";
-    }
+    private static final String DEFAULT_BINARY_APP_LOCATION = ProcessUtil.getDefaultBinaryAppLocation();
 
     private ImageOptimizationService<Object> imageOptimizationService;
 
@@ -83,7 +88,7 @@ public class ImageOptimizationServiceTest {
      *                     directories used by
      *                     {@link ImageOptimizationService#ImageOptimizationService(File, File)}.
      */
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         final File tmpDir = File.createTempFile(ImageOptimizationServiceTest.class.getName(), "");
         tmpDir.delete();
@@ -101,39 +106,24 @@ public class ImageOptimizationServiceTest {
      *                     <code>ImageOptimizationService</code> constructor if
      *                     its passed in file has an issue.
      */
-    @SuppressWarnings("unused")
     @Test
     public void testImageOptimizationService() throws IOException {
-        try {
-            new ImageOptimizationService<>(File.createTempFile("qqq", "qqq"), new File(DEFAULT_BINARY_APP_LOCATION));
-            fail("It is expected that the file does not exist.");
-        } catch(final IllegalArgumentException ignore) {
-            // if this catch block is executed then the test passed and the File
-            // does not exist.
-        }
-        try {
-            new ImageOptimizationService<>(null, new File(DEFAULT_BINARY_APP_LOCATION));
-            fail("It is expected that the file does not exist.");
-        } catch(final IllegalArgumentException ignore) {
-            // if this catch block is executed then the test passed and the File
-            // does not exist.
-        }
-        try {
-            final File file = File.createTempFile("qqq", "qqq");
-            file.createNewFile();
-            file.deleteOnExit();
-            new ImageOptimizationService<>(file, new File(DEFAULT_BINARY_APP_LOCATION));
-            fail("failed because we expected tthe temp directory to be a file instead of a directory.");
-        } catch(final IllegalArgumentException ignore) {
-            // if this catch block is executed then the test passed and the File
-            // is a file instead of a directory.
-        }
+        IllegalArgumentException actualException = assertThrows(IllegalArgumentException.class, () -> new ImageOptimizationService<>(File.createTempFile("qqq", "qqq"), new File(DEFAULT_BINARY_APP_LOCATION)));
+        assertThat(actualException.getMessage(), matchesRegex("The passed in tmpWorkingDirectory, \".+\", needs to be a directory."));
+        actualException = assertThrows(IllegalArgumentException.class, () -> new ImageOptimizationService<>(null, new File(DEFAULT_BINARY_APP_LOCATION)));
+        assertThat(actualException.getMessage(), equalTo("The passed in tmpWorkingDirectory needs to exist."));
+        
+        final File file = File.createTempFile("qqq", "qqq");
+        file.createNewFile();
+        file.deleteOnExit();
+        actualException = assertThrows(IllegalArgumentException.class, () -> new ImageOptimizationService<>(file, new File(DEFAULT_BINARY_APP_LOCATION)));
+        assertThat(actualException.getMessage(), matchesRegex("The passed in tmpWorkingDirectory, \".+\", needs to be a directory."));
 
         final File tmpDir = File.createTempFile(ImageOptimizationServiceTest.class.getName(), "");
         tmpDir.delete();
         tmpDir.mkdir();
         tmpDir.deleteOnExit();
-        assertNotNull(new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION)));
+        assertThat(new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION)), notNullValue());
     }
 
     /**
@@ -144,118 +134,89 @@ public class ImageOptimizationServiceTest {
      *                     <code>ImageOptimizationService</code> constructor if
      *                     its passed in file has an issue.
      */
-    @SuppressWarnings("unused")
     @Test
     public void testImageOptimizationService2() throws IOException {
-        try {
-            new ImageOptimizationService<>(File.createTempFile("qqq", "qqq"), new File(DEFAULT_BINARY_APP_LOCATION), 1);
-            fail("It is expected that the file does not exist.");
-        } catch(final IllegalArgumentException ignore) {
-            // if this catch block is executed then the test passed and the File
-            // does not exist.
-        }
-        try {
-            new ImageOptimizationService<>(null, new File(DEFAULT_BINARY_APP_LOCATION), 1);
-            fail("It is expected that the file does not exist.");
-        } catch(final IllegalArgumentException ignore) {
-            // if this catch block is executed then the test passed and the File
-            // does not exist.
-        }
-        try {
-            final File file = File.createTempFile("qqq", "qqq");
-            file.createNewFile();
-            file.deleteOnExit();
-            new ImageOptimizationService<>(file, new File(DEFAULT_BINARY_APP_LOCATION), 1);
-            fail("failed because we expected tthe temp directory to be a file instead of a directory.");
-        } catch(final IllegalArgumentException ignore) {
-            // if this catch block is executed then the test passed and the File
-            // is a file instead of a directory.
-        }
+        // Input file does not exist.
+        IllegalArgumentException actualException = assertThrows(IllegalArgumentException.class, () -> new ImageOptimizationService<>(File.createTempFile("qqq", "qqq"), new File(DEFAULT_BINARY_APP_LOCATION), 1));
+        assertThat(actualException.getMessage(), matchesRegex("^The passed in tmpWorkingDirectory, \".+\", needs to be a directory.$"));
+
+        actualException = assertThrows(IllegalArgumentException.class, () -> new ImageOptimizationService<>(null, new File(DEFAULT_BINARY_APP_LOCATION), 1));
+        assertThat(actualException.getMessage(), matchesRegex("The passed in tmpWorkingDirectory needs to exist."));
+
+        final File file = File.createTempFile("qqq", "qqq");
+        file.createNewFile();
+        file.deleteOnExit();
+        actualException = assertThrows(IllegalArgumentException.class, () -> new ImageOptimizationService<>(file, new File(DEFAULT_BINARY_APP_LOCATION), 1));
+        assertThat(actualException.getMessage(), matchesRegex("The passed in tmpWorkingDirectory, \".+\", needs to be a directory."));
 
         File tmpDir = File.createTempFile(ImageOptimizationServiceTest.class.getName(), "");
         tmpDir.delete();
         tmpDir.mkdir();
         tmpDir.deleteOnExit();
-        assertNotNull(new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION), 1));
+        assertThat(new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION), 1), notNullValue());
 
 
-        try {
-            new ImageOptimizationService<>(File.createTempFile("qqq", "qqq"), new File(DEFAULT_BINARY_APP_LOCATION), 0);
-            fail("It is expected that the file does not exist.");
-        } catch(final IllegalArgumentException ignore) {
-            // if this catch block is executed then the test passed and the File
-            // does not exist.
-        }
-        try {
-            new ImageOptimizationService<>(null, new File(DEFAULT_BINARY_APP_LOCATION), 0);
-            fail("It is expected that the file does not exist.");
-        } catch(final IllegalArgumentException ignore) {
-            // if this catch block is executed then the test passed and the File
-            // does not exist.
-        }
-        try {
-            final File file = File.createTempFile("qqq", "qqq");
-            file.createNewFile();
-            file.deleteOnExit();
-            new ImageOptimizationService<>(file, new File(DEFAULT_BINARY_APP_LOCATION), 0);
-            fail("failed because we expected tthe temp directory to be a file instead of a directory.");
-        } catch(final IllegalArgumentException ignore) {
-            // if this catch block is executed then the test passed and the File
-            // is a file instead of a directory.
-        }
+        actualException = assertThrows(IllegalArgumentException.class, () -> new ImageOptimizationService<>(File.createTempFile("qqq", "qqq"), new File(DEFAULT_BINARY_APP_LOCATION), 0));
+        
+        actualException = assertThrows(IllegalArgumentException.class, () -> new ImageOptimizationService<>(null, new File(DEFAULT_BINARY_APP_LOCATION), 0));
+
+        final File file2 = File.createTempFile("qqq", "qqq");
+        file2.createNewFile();
+        file2.deleteOnExit();
+        actualException = assertThrows(IllegalArgumentException.class, () -> new ImageOptimizationService<>(file2, new File(DEFAULT_BINARY_APP_LOCATION), 0));
 
         tmpDir = File.createTempFile(ImageOptimizationServiceTest.class.getName(), "");
         tmpDir.delete();
         tmpDir.mkdir();
         tmpDir.deleteOnExit();
-        assertNotNull(new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION), 0));
+        assertThat(new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION), 0), notNullValue());
     }
 
-    private static final void validateFileOptimization(final OptimizationResult<Object> result, final ImageOptimizationTestDTO imageOptimizationTestDTO, final boolean isWebP) throws IOException {
-        final String errorMsg = String.format("failed for image \"%s\"", imageOptimizationTestDTO.getMasterFile().getName());
+    private static final void validateFileOptimization(final OptimizationResult<Object> result, final ImageOptimizationTestDto imageOptimizationTestDto, final boolean isWebP) throws IOException {
+        final String errorMsg = String.format("failed for image \"%s\"", imageOptimizationTestDto.getMasterFile().getName());
 
         // Checking that the master image was not updated as part of this
         // process.
-        assertThat(errorMsg, Long.valueOf(FileUtils.checksumCRC32(imageOptimizationTestDTO.getMasterFile())), Matchers.equalTo(Long.valueOf(imageOptimizationTestDTO.getMasterFileChecksum())));
+        assertThat(errorMsg, Long.valueOf(FileUtils.checksumCRC32(imageOptimizationTestDto.getMasterFile())), equalTo(Long.valueOf(imageOptimizationTestDto.getMasterFileChecksum())));
 
-        if(imageOptimizationTestDTO.isOptimized() || isWebP) {
+        if (imageOptimizationTestDto.isOptimized() || isWebP) {
 
-            assertThat(errorMsg, result, Matchers.notNullValue());
+            assertThat(errorMsg, result, notNullValue());
 
-            assertThat(errorMsg, result.getGusBugId(), Matchers.nullValue());
-            assertThat(errorMsg, result.getNewChangeList(), Matchers.nullValue());
-            assertThat(errorMsg, result.getOptimizedFile(), Matchers.notNullValue());
-            assertThat(errorMsg, Boolean.valueOf(result.getOptimizedFile().exists()), Matchers.equalTo(Boolean.TRUE));
+            assertThat(errorMsg, result.getGusBugId(), nullValue());
+            assertThat(errorMsg, result.getNewChangeList(), nullValue());
+            assertThat(errorMsg, result.getOptimizedFile(), notNullValue());
+            assertThat(errorMsg, Boolean.valueOf(result.getOptimizedFile().exists()), equalTo(Boolean.TRUE));
 
-            if(isWebP) {
-                assertThat(errorMsg, FilenameUtils.removeExtension(result.getOptimizedFile().getName()), Matchers.equalTo(FilenameUtils.removeExtension(imageOptimizationTestDTO.getMasterFile().getName())));
-                assertThat(errorMsg, FilenameUtils.getExtension(result.getOptimizedFile().getName()), Matchers.equalTo(IImageOptimizationService.WEBP_EXTENSION));
-                assertThat(errorMsg, Boolean.valueOf(result.isBrowserSpecific()), Matchers.equalTo(Boolean.TRUE));
-                assertThat(errorMsg, Boolean.valueOf(result.isFileTypeChanged()), Matchers.equalTo(Boolean.TRUE));
-            } else if(imageOptimizationTestDTO.isFileTypeChanged()) {
-                assertThat(errorMsg, FilenameUtils.removeExtension(result.getOptimizedFile().getName()), Matchers.equalTo(FilenameUtils.removeExtension(imageOptimizationTestDTO.getMasterFile().getName())));
-                assertThat(errorMsg, FilenameUtils.getExtension(imageOptimizationTestDTO.getMasterFile().getName()), Matchers.equalTo(IImageOptimizationService.GIF_EXTENSION));
-                assertThat(errorMsg, FilenameUtils.getExtension(result.getOptimizedFile().getName()), Matchers.equalTo(IImageOptimizationService.PNG_EXTENSION));
-                assertThat(errorMsg, Boolean.valueOf(result.isFileTypeChanged()), Matchers.equalTo(Boolean.TRUE));
+            if (isWebP) {
+                assertThat(errorMsg, FilenameUtils.removeExtension(result.getOptimizedFile().getName()), equalTo(FilenameUtils.removeExtension(imageOptimizationTestDto.getMasterFile().getName())));
+                assertThat(errorMsg, FilenameUtils.getExtension(result.getOptimizedFile().getName()), equalTo(IImageOptimizationService.WEBP_EXTENSION));
+                assertThat(errorMsg, Boolean.valueOf(result.isBrowserSpecific()), equalTo(Boolean.TRUE));
+                assertThat(errorMsg, Boolean.valueOf(result.isFileTypeChanged()), equalTo(Boolean.TRUE));
+            } else if (imageOptimizationTestDto.isFileTypeChanged()) {
+                assertThat(errorMsg, FilenameUtils.removeExtension(result.getOptimizedFile().getName()), equalTo(FilenameUtils.removeExtension(imageOptimizationTestDto.getMasterFile().getName())));
+                assertThat(errorMsg, FilenameUtils.getExtension(imageOptimizationTestDto.getMasterFile().getName()), equalTo(IImageOptimizationService.GIF_EXTENSION));
+                assertThat(errorMsg, FilenameUtils.getExtension(result.getOptimizedFile().getName()), equalTo(IImageOptimizationService.PNG_EXTENSION));
+                assertThat(errorMsg, Boolean.valueOf(result.isFileTypeChanged()), equalTo(Boolean.TRUE));
             } else {
-                assertThat(errorMsg, result.getOptimizedFile().getName(), Matchers.equalTo(imageOptimizationTestDTO.getMasterFile().getName()));
-                assertThat(errorMsg, Boolean.valueOf(result.isBrowserSpecific()), Matchers.equalTo(Boolean.FALSE));
-                assertThat(errorMsg, Boolean.valueOf(result.isFileTypeChanged()), Matchers.equalTo(Boolean.FALSE));
+                assertThat(errorMsg, result.getOptimizedFile().getName(), equalTo(imageOptimizationTestDto.getMasterFile().getName()));
+                assertThat(errorMsg, Boolean.valueOf(result.isBrowserSpecific()), equalTo(Boolean.FALSE));
+                assertThat(errorMsg, Boolean.valueOf(result.isFileTypeChanged()), equalTo(Boolean.FALSE));
             }
 
-            assertThat(errorMsg, Long.valueOf(result.getOptimizedFileSize()), Matchers.equalTo(Long.valueOf(result.getOptimizedFile().length())));
-            assertThat(errorMsg, result.getOriginalFile(), Matchers.notNullValue());
-            assertThat(errorMsg, Boolean.valueOf(result.getOriginalFile().exists()), Matchers.equalTo(Boolean.TRUE));
-            assertThat(errorMsg, result.getOriginalFile(), Matchers.equalTo(imageOptimizationTestDTO.getMasterFile().getCanonicalFile()));
-            assertThat(errorMsg, Long.valueOf(result.getOriginalFileSize()), Matchers.equalTo(Long.valueOf(imageOptimizationTestDTO.getMasterFile().length())));
+            assertThat(errorMsg, Long.valueOf(result.getOptimizedFileSize()), equalTo(Long.valueOf(result.getOptimizedFile().length())));
+            assertThat(errorMsg, result.getOriginalFile(), notNullValue());
+            assertThat(errorMsg, Boolean.valueOf(result.getOriginalFile().exists()), equalTo(Boolean.TRUE));
+            assertThat(errorMsg, result.getOriginalFile(), equalTo(imageOptimizationTestDto.getMasterFile().getCanonicalFile()));
+            assertThat(errorMsg, Long.valueOf(result.getOriginalFileSize()), equalTo(Long.valueOf(imageOptimizationTestDto.getMasterFile().length())));
 
             //The assert is flappy for animated gifs.
-            if(!imageOptimizationTestDTO.isAnimatedGif()) {
-                assertThat(errorMsg, Boolean.valueOf(result.isFailedAutomatedTest()), Matchers.equalTo(Boolean.valueOf(imageOptimizationTestDTO.isFailedAutomatedTest())));
+            if (!imageOptimizationTestDto.isAnimatedGif()) {
+                assertThat(errorMsg, Boolean.valueOf(result.isFailedAutomatedTest()), equalTo(Boolean.valueOf(imageOptimizationTestDto.isFailedAutomatedTest())));
             }
-            assertThat(errorMsg, Boolean.valueOf(result.isOptimized()), Matchers.equalTo(Boolean.TRUE));
+            assertThat(errorMsg, Boolean.valueOf(result.isOptimized()), equalTo(Boolean.TRUE));
         } else {
-            assertThat(errorMsg, result, Matchers.nullValue());
+            assertThat(errorMsg, result, nullValue());
         }
     }
 
@@ -267,22 +228,22 @@ public class ImageOptimizationServiceTest {
         return tmpDir;
     }
 
-    private static final int getNumberOfWebPCompatibleImages(final ImageOptimizationTestDTO[] imageOptimizationTestDTOList) {
+    private static final int getNumberOfWebPCompatibleImages(final ImageOptimizationTestDto[] imageOptimizationTestDtoList) {
         int count = 0;
 
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            if(!imageOptimizationTestDTO.isAnimatedGif() && !imageOptimizationTestDTO.isJPEG()) {
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            if (!imageOptimizationTestDto.isAnimatedGif() && !imageOptimizationTestDto.isJPEG()) {
                 count++;
             }
         }
         return count;
     }
 
-    private static final int getNumberOfOptimizedImages(final ImageOptimizationTestDTO[] imageOptimizationTestDTOList) {
+    private static final int getNumberOfOptimizedImages(final ImageOptimizationTestDto[] imageOptimizationTestDtoList) {
         int count = 0;
 
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            if(imageOptimizationTestDTO.isOptimized()) {
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            if (imageOptimizationTestDto.isOptimized()) {
                 count++;
             }
         }
@@ -305,87 +266,81 @@ public class ImageOptimizationServiceTest {
     @Test
     public void testOptimizeAllImagesALL() throws IOException, ImageFileOptimizationException, TimeoutException {
 
-        final ImageOptimizationTestDTO[] imageOptimizationTestDTOList = {new ImageOptimizationTestDTO("csv_120.png", false, false, true),
-                new ImageOptimizationTestDTO("sharing_model2.jpg", false, false, true),
-                new ImageOptimizationTestDTO("loading.gif", false, false, true),
-                new ImageOptimizationTestDTO("el_icon.gif", false, true, true),
-                new ImageOptimizationTestDTO("safe32.png", false, false, true),
-                new ImageOptimizationTestDTO("no_transparency.gif", false, true, true),
-                new ImageOptimizationTestDTO("doctype_16_sprite.png", false, false, false),
-                new ImageOptimizationTestDTO("addCol.gif", false, true, true),
-                new ImageOptimizationTestDTO("s-arrow-bo.gif", false, true, true)};
+        final ImageOptimizationTestDto[] imageOptimizationTestDtoList = {new ImageOptimizationTestDto("csv_120.png", false, false, true),
+                new ImageOptimizationTestDto("sharing_model2.jpg", false, false, true),
+                new ImageOptimizationTestDto("loading.gif", false, false, true),
+                new ImageOptimizationTestDto("el_icon.gif", false, true, true),
+                new ImageOptimizationTestDto("safe32.png", false, false, true),
+                new ImageOptimizationTestDto("no_transparency.gif", false, true, true),
+                new ImageOptimizationTestDto("doctype_16_sprite.png", false, false, false),
+                new ImageOptimizationTestDto("addCol.gif", false, true, true),
+                new ImageOptimizationTestDto("s-arrow-bo.gif", false, true, true)};
 
-        final int numberOfOptimizedImages = getNumberOfOptimizedImages(imageOptimizationTestDTOList);
+        final int numberOfOptimizedImages = getNumberOfOptimizedImages(imageOptimizationTestDtoList);
 
-        final List<File> filesToOptimize = new ArrayList<>(imageOptimizationTestDTOList.length);
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            filesToOptimize.add(imageOptimizationTestDTO.getMasterFile());
+        final List<File> filesToOptimize = new ArrayList<>(imageOptimizationTestDtoList.length);
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            filesToOptimize.add(imageOptimizationTestDto.getMasterFile());
         }
 
         //Testing with ALL and no WebP
         List<OptimizationResult<Object>> results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.ALL, false, filesToOptimize);
-        assertNotNull(results);
+        assertThat(results, hasSize(numberOfOptimizedImages));
 
-        Map<String, OptimizationResult<Object>> treasureMap = new HashMap<>(numberOfOptimizedImages);
-        for(final OptimizationResult<Object> result : results) {
-            assertNotNull(result);
-            treasureMap.put(result.getOriginalFile().getName(), result);
-        }
+        Map<String, OptimizationResult<Object>> treasureMap
+            = results.stream().collect(Collectors.toMap(result -> result.getOriginalFile().getName(), Function.identity()));
+        // Add null checks
 
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName()), imageOptimizationTestDTO, false);
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            validateFileOptimization(treasureMap.get(imageOptimizationTestDto.getMasterFile().getName()), imageOptimizationTestDto, false);
         }
-        assertEquals(numberOfOptimizedImages, results.size());
-        assertEquals(numberOfOptimizedImages, treasureMap.size());
+        assertThat(results, hasSize(numberOfOptimizedImages));
+        assertThat(treasureMap, aMapWithSize(numberOfOptimizedImages));
 
         //Testing with ALL and YES WebP
-        final int numberOfResultImages = numberOfOptimizedImages + getNumberOfWebPCompatibleImages(imageOptimizationTestDTOList);
+        final int numberOfResultImages = numberOfOptimizedImages + getNumberOfWebPCompatibleImages(imageOptimizationTestDtoList);
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.ALL, true, filesToOptimize);
-        assertNotNull(results);
+        assertThat(results, notNullValue());
 
         treasureMap = new HashMap<>(numberOfResultImages);
-        for(final OptimizationResult<Object> result : results) {
-            assertNotNull(result);
-            if(FilenameUtils.isExtension(result.getOptimizedFile().getName(), IImageOptimizationService.WEBP_EXTENSION)) {
+        for (final OptimizationResult<Object> result : results) {
+            assertThat(result, notNullValue());
+            if (FilenameUtils.isExtension(result.getOptimizedFile().getName(), IImageOptimizationService.WEBP_EXTENSION)) {
                 treasureMap.put(result.getOriginalFile().getName() + WEBP_ID, result);
             } else {
                 treasureMap.put(result.getOriginalFile().getName(), result);
             }
         }
 
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName()), imageOptimizationTestDTO, false);
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            validateFileOptimization(treasureMap.get(imageOptimizationTestDto.getMasterFile().getName()), imageOptimizationTestDto, false);
         }
-        assertEquals(numberOfResultImages, results.size());
-        assertEquals(numberOfResultImages, treasureMap.size());
+        assertThat(results, hasSize(numberOfResultImages));
+        assertThat(treasureMap, aMapWithSize(numberOfResultImages));
 
         //WebP Check
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            if(imageOptimizationTestDTO.isJPEG() || imageOptimizationTestDTO.isAnimatedGif()) {
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            if (imageOptimizationTestDto.isJPEG() || imageOptimizationTestDto.isAnimatedGif()) {
                 //JPEG is not converted to WEBP
-                assertNull(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID));
+                assertThat(treasureMap.get(imageOptimizationTestDto.getMasterFile().getName() + WEBP_ID), nullValue());
             } else {
-                validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), imageOptimizationTestDTO, true);
+                validateFileOptimization(treasureMap.get(imageOptimizationTestDto.getMasterFile().getName() + WEBP_ID), imageOptimizationTestDto, true);
             }
         }
 
         //Testing a null list of images
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.ALL, false, (Collection<File>)null);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
 
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.ALL, true, (Collection<File>)null);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
 
         //Testing an empty list of images
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.ALL, false, Collections.EMPTY_LIST);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
 
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.ALL, true, Collections.EMPTY_LIST);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
     }
 
     /**
@@ -404,87 +359,83 @@ public class ImageOptimizationServiceTest {
     @Test
     public void testOptimizeAllImagesNONE() throws IOException, ImageFileOptimizationException, TimeoutException {
 
-        final ImageOptimizationTestDTO[] imageOptimizationTestDTOList = {new ImageOptimizationTestDTO("csv_120.png", false, false, true),
-                new ImageOptimizationTestDTO("sharing_model2.jpg", false, false, true),
-                new ImageOptimizationTestDTO("loading.gif", false, false, true),
-                new ImageOptimizationTestDTO("el_icon.gif", false, false, false),
-                new ImageOptimizationTestDTO("safe32.png", false, false, true),
-                new ImageOptimizationTestDTO("no_transparency.gif", false, false, true),
-                new ImageOptimizationTestDTO("doctype_16_sprite.png", false, false, false),
-                new ImageOptimizationTestDTO("addCol.gif", false, false, false),
-                new ImageOptimizationTestDTO("s-arrow-bo.gif", false, false, true)};
+        final ImageOptimizationTestDto[] imageOptimizationTestDtoList = {new ImageOptimizationTestDto("csv_120.png", false, false, true),
+                new ImageOptimizationTestDto("sharing_model2.jpg", false, false, true),
+                new ImageOptimizationTestDto("loading.gif", false, false, true),
+                new ImageOptimizationTestDto("el_icon.gif", false, false, false),
+                new ImageOptimizationTestDto("safe32.png", false, false, true),
+                new ImageOptimizationTestDto("no_transparency.gif", false, false, true),
+                new ImageOptimizationTestDto("doctype_16_sprite.png", false, false, false),
+                new ImageOptimizationTestDto("addCol.gif", false, false, false),
+                new ImageOptimizationTestDto("s-arrow-bo.gif", false, false, true)};
 
-        final int numberOfOptimizedImages = getNumberOfOptimizedImages(imageOptimizationTestDTOList);
+        final int numberOfOptimizedImages = getNumberOfOptimizedImages(imageOptimizationTestDtoList);
 
-        final List<File> filesToOptimize = new ArrayList<>(imageOptimizationTestDTOList.length);
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            filesToOptimize.add(imageOptimizationTestDTO.getMasterFile());
+        final List<File> filesToOptimize = new ArrayList<>(imageOptimizationTestDtoList.length);
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            filesToOptimize.add(imageOptimizationTestDto.getMasterFile());
         }
 
         //Testing with NONE
         List<OptimizationResult<Object>> results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.NONE, false, filesToOptimize);
-        assertNotNull(results);
+        assertThat(results, notNullValue());
 
         Map<String, OptimizationResult<Object>> treasureMap = new HashMap<>(numberOfOptimizedImages);
-        for(final OptimizationResult<Object> result : results) {
-            assertNotNull(result);
+        for (final OptimizationResult<Object> result : results) {
+            assertThat(result, notNullValue());
             treasureMap.put(result.getOriginalFile().getName(), result);
         }
 
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName()), imageOptimizationTestDTO, false);
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            validateFileOptimization(treasureMap.get(imageOptimizationTestDto.getMasterFile().getName()), imageOptimizationTestDto, false);
         }
-        assertEquals(numberOfOptimizedImages, treasureMap.size());
-        assertEquals(numberOfOptimizedImages, results.size());
+        assertThat(treasureMap, aMapWithSize(numberOfOptimizedImages));
+        assertThat(results, hasSize(numberOfOptimizedImages));
 
         //Testing with NONE and YES WebP
-        final int numberOfResultImages = numberOfOptimizedImages + getNumberOfWebPCompatibleImages(imageOptimizationTestDTOList);
+        final int numberOfResultImages = numberOfOptimizedImages + getNumberOfWebPCompatibleImages(imageOptimizationTestDtoList);
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.NONE, true, filesToOptimize);
-        assertNotNull(results);
+        assertThat(results, notNullValue());
 
         treasureMap = new HashMap<>(numberOfResultImages);
-        for(final OptimizationResult<Object> result : results) {
-            assertNotNull(result);
-            if(FilenameUtils.isExtension(result.getOptimizedFile().getName(), IImageOptimizationService.WEBP_EXTENSION)) {
+        for (final OptimizationResult<Object> result : results) {
+            assertThat(result, notNullValue());
+            if (FilenameUtils.isExtension(result.getOptimizedFile().getName(), IImageOptimizationService.WEBP_EXTENSION)) {
                 treasureMap.put(result.getOriginalFile().getName() + WEBP_ID, result);
             } else {
                 treasureMap.put(result.getOriginalFile().getName(), result);
             }
         }
 
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName()), imageOptimizationTestDTO, false);
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            validateFileOptimization(treasureMap.get(imageOptimizationTestDto.getMasterFile().getName()), imageOptimizationTestDto, false);
         }
-        assertEquals(numberOfResultImages, treasureMap.size());
-        assertEquals(numberOfResultImages, results.size());
+        assertThat(treasureMap, aMapWithSize(numberOfResultImages));
+        assertThat(results, hasSize(numberOfResultImages));
 
         //WebP Check
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            if(imageOptimizationTestDTO.isJPEG() || imageOptimizationTestDTO.isAnimatedGif()) {
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            if (imageOptimizationTestDto.isJPEG() || imageOptimizationTestDto.isAnimatedGif()) {
                 //JPEG is not converted to WEBP
-                assertNull(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID));
+                assertThat(treasureMap.get(imageOptimizationTestDto.getMasterFile().getName() + WEBP_ID), nullValue());
             } else {
-                validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), imageOptimizationTestDTO, true);
+                validateFileOptimization(treasureMap.get(imageOptimizationTestDto.getMasterFile().getName() + WEBP_ID), imageOptimizationTestDto, true);
             }
         }
 
         //Testing a null list of images
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.NONE, false, (Collection<File>)null);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
 
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.NONE, true, (Collection<File>)null);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
 
         //Testing an empty list of images
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.NONE, false, Collections.EMPTY_LIST);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
 
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.NONE, true, Collections.EMPTY_LIST);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
     }
 
     /**
@@ -503,87 +454,83 @@ public class ImageOptimizationServiceTest {
     @Test
     public void testOptimizeAllImagesIE6SAFE() throws IOException, ImageFileOptimizationException, TimeoutException {
 
-        final ImageOptimizationTestDTO[] imageOptimizationTestDTOList = {new ImageOptimizationTestDTO("csv_120.png", false, false, true),
-                new ImageOptimizationTestDTO("sharing_model2.jpg", false, false, true),
-                new ImageOptimizationTestDTO("loading.gif", false, false, true),
-                new ImageOptimizationTestDTO("el_icon.gif", false, false, false),
-                new ImageOptimizationTestDTO("safe32.png", false, false, true),
-                new ImageOptimizationTestDTO("no_transparency.gif", false, true, true),
-                new ImageOptimizationTestDTO("doctype_16_sprite.png", false, false, false),
-                new ImageOptimizationTestDTO("addCol.gif", false, false, false),
-                new ImageOptimizationTestDTO("s-arrow-bo.gif", false, false, true)};
+        final ImageOptimizationTestDto[] imageOptimizationTestDtoList = {new ImageOptimizationTestDto("csv_120.png", false, false, true),
+                new ImageOptimizationTestDto("sharing_model2.jpg", false, false, true),
+                new ImageOptimizationTestDto("loading.gif", false, false, true),
+                new ImageOptimizationTestDto("el_icon.gif", false, false, false),
+                new ImageOptimizationTestDto("safe32.png", false, false, true),
+                new ImageOptimizationTestDto("no_transparency.gif", false, true, true),
+                new ImageOptimizationTestDto("doctype_16_sprite.png", false, false, false),
+                new ImageOptimizationTestDto("addCol.gif", false, false, false),
+                new ImageOptimizationTestDto("s-arrow-bo.gif", false, false, true)};
 
-        final int numberOfOptimizedImages = getNumberOfOptimizedImages(imageOptimizationTestDTOList);
+        final int numberOfOptimizedImages = getNumberOfOptimizedImages(imageOptimizationTestDtoList);
 
-        final List<File> filesToOptimize = new ArrayList<>(imageOptimizationTestDTOList.length);
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            filesToOptimize.add(imageOptimizationTestDTO.getMasterFile());
+        final List<File> filesToOptimize = new ArrayList<>(imageOptimizationTestDtoList.length);
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            filesToOptimize.add(imageOptimizationTestDto.getMasterFile());
         }
 
         //Testing with IE6SAFE
         List<OptimizationResult<Object>> results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.IE6SAFE, false, filesToOptimize);
-        assertNotNull(results);
+        assertThat(results, notNullValue());
 
         Map<String, OptimizationResult<Object>> treasureMap = new HashMap<>(numberOfOptimizedImages);
-        for(final OptimizationResult<Object> result : results) {
-            assertNotNull(result);
+        for (final OptimizationResult<Object> result : results) {
+            assertThat(result, notNullValue());
             treasureMap.put(result.getOriginalFile().getName(), result);
         }
 
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName()), imageOptimizationTestDTO, false);
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            validateFileOptimization(treasureMap.get(imageOptimizationTestDto.getMasterFile().getName()), imageOptimizationTestDto, false);
         }
-        assertEquals(numberOfOptimizedImages, treasureMap.size());
-        assertEquals(numberOfOptimizedImages, results.size());
+        assertThat(treasureMap, aMapWithSize(numberOfOptimizedImages));
+        assertThat(results, hasSize(numberOfOptimizedImages));
 
         //Testing with IE6SAFE and YES WebP
-        final int numberOfResultImages = numberOfOptimizedImages + getNumberOfWebPCompatibleImages(imageOptimizationTestDTOList);
+        final int numberOfResultImages = numberOfOptimizedImages + getNumberOfWebPCompatibleImages(imageOptimizationTestDtoList);
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.IE6SAFE, true, filesToOptimize);
-        assertNotNull(results);
+        assertThat(results, notNullValue());
 
         treasureMap = new HashMap<>(numberOfResultImages);
-        for(final OptimizationResult<Object> result : results) {
-            assertNotNull(result);
-            if(FilenameUtils.isExtension(result.getOptimizedFile().getName(), IImageOptimizationService.WEBP_EXTENSION)) {
+        for (final OptimizationResult<Object> result : results) {
+            assertThat(result, notNullValue());
+            if (FilenameUtils.isExtension(result.getOptimizedFile().getName(), IImageOptimizationService.WEBP_EXTENSION)) {
                 treasureMap.put(result.getOriginalFile().getName() + WEBP_ID, result);
             } else {
                 treasureMap.put(result.getOriginalFile().getName(), result);
             }
         }
 
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName()), imageOptimizationTestDTO, false);
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            validateFileOptimization(treasureMap.get(imageOptimizationTestDto.getMasterFile().getName()), imageOptimizationTestDto, false);
         }
-        assertEquals(numberOfResultImages, treasureMap.size());
-        assertEquals(numberOfResultImages, results.size());
+        assertThat(treasureMap, aMapWithSize(numberOfResultImages));
+        assertThat(results, hasSize(numberOfResultImages));
 
         //WebP Check
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            if(imageOptimizationTestDTO.isJPEG() || imageOptimizationTestDTO.isAnimatedGif()) {
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            if (imageOptimizationTestDto.isJPEG() || imageOptimizationTestDto.isAnimatedGif()) {
                 //JPEG is not converted to WEBP
-                assertNull(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID));
+                assertThat(treasureMap.get(imageOptimizationTestDto.getMasterFile().getName() + WEBP_ID), nullValue());
             } else {
-                validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), imageOptimizationTestDTO, true);
+                validateFileOptimization(treasureMap.get(imageOptimizationTestDto.getMasterFile().getName() + WEBP_ID), imageOptimizationTestDto, true);
             }
         }
 
         //Testing a null list of images
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.IE6SAFE, false, (Collection<File>)null);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
 
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.IE6SAFE, true, (Collection<File>)null);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
 
         //Testing an empty list of images
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.IE6SAFE, false, Collections.EMPTY_LIST);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
 
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.IE6SAFE, true, Collections.EMPTY_LIST);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
     }
 
     /**
@@ -603,54 +550,41 @@ public class ImageOptimizationServiceTest {
     @Test
     public void testOptimizeAllImagesNONEWithTimeoutFailure() throws IOException, ImageFileOptimizationException, TimeoutException {
 
-        final ImageOptimizationTestDTO[] imageOptimizationTestDTOList = {new ImageOptimizationTestDTO("csv_120.png", false, false, true),
-                new ImageOptimizationTestDTO("sharing_model2.jpg", false, false, true),
-                new ImageOptimizationTestDTO("loading.gif", false, false, true),
-                new ImageOptimizationTestDTO("el_icon.gif", false, false, true),
-                new ImageOptimizationTestDTO("safe32.png", false, false, true),
-                new ImageOptimizationTestDTO("no_transparency.gif", false, false, true),
-                new ImageOptimizationTestDTO("doctype_16_sprite.png", false, false, false),
-                new ImageOptimizationTestDTO("addCol.gif", false, false, false),
-                new ImageOptimizationTestDTO("s-arrow-bo.gif", false, false, true),
-                new ImageOptimizationTestDTO("imagebomb.png", false, false, true)};
+        final ImageOptimizationTestDto[] imageOptimizationTestDtoList = {new ImageOptimizationTestDto("csv_120.png", false, false, true),
+                new ImageOptimizationTestDto("sharing_model2.jpg", false, false, true),
+                new ImageOptimizationTestDto("loading.gif", false, false, true),
+                new ImageOptimizationTestDto("el_icon.gif", false, false, true),
+                new ImageOptimizationTestDto("safe32.png", false, false, true),
+                new ImageOptimizationTestDto("no_transparency.gif", false, false, true),
+                new ImageOptimizationTestDto("doctype_16_sprite.png", false, false, false),
+                new ImageOptimizationTestDto("addCol.gif", false, false, false),
+                new ImageOptimizationTestDto("s-arrow-bo.gif", false, false, true),
+                new ImageOptimizationTestDto("imagebomb.png", false, false, true)};
 
-        final List<File> filesToOptimize = new ArrayList<>(imageOptimizationTestDTOList.length);
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            filesToOptimize.add(imageOptimizationTestDTO.getMasterFile());
+        final List<File> filesToOptimize = new ArrayList<>(imageOptimizationTestDtoList.length);
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            filesToOptimize.add(imageOptimizationTestDto.getMasterFile());
         }
 
-        try {
-            //Testing with NONE
-            new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 1).optimizeAllImages(FileTypeConversion.NONE, false, filesToOptimize);
-            fail();
-        } catch(final TimeoutException te) {
-            //expected the exception
-        }
-
-        try {
-            //Testing with NONE and YES WebP
-            new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 1).optimizeAllImages(FileTypeConversion.NONE, true, filesToOptimize);
-            fail();
-        } catch(final TimeoutException te) {
-            //expected the exception
-        }
+        //Testing with NONE
+        TimeoutException actualException = assertThrows(TimeoutException.class, () -> new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 1).optimizeAllImages(FileTypeConversion.NONE, false, filesToOptimize));
+        assertThat(actualException.getMessage(), equalTo("Timed out waiting for image to optimize."));
+        
+        //Testing with NONE and YES WebP
+        actualException = assertThrows(TimeoutException.class, () -> new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 1).optimizeAllImages(FileTypeConversion.NONE, true, filesToOptimize));
 
         List<OptimizationResult<Object>> results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION)).optimizeAllImages(FileTypeConversion.NONE, false, (Collection<File>)null);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
 
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 1).optimizeAllImages(FileTypeConversion.NONE, true, (Collection<File>)null);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
 
         //Testing an empty list of images
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 1).optimizeAllImages(FileTypeConversion.NONE, false, Collections.EMPTY_LIST);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
 
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 1).optimizeAllImages(FileTypeConversion.NONE, true, Collections.EMPTY_LIST);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
     }
 
     /**
@@ -670,87 +604,83 @@ public class ImageOptimizationServiceTest {
     @Test
     public void testOptimizeAllImagesNONEWithTimeoutSuccess() throws IOException, ImageFileOptimizationException, TimeoutException {
 
-        final ImageOptimizationTestDTO[] imageOptimizationTestDTOList = {new ImageOptimizationTestDTO("csv_120.png", false, false, true),
-                new ImageOptimizationTestDTO("sharing_model2.jpg", false, false, true),
-                new ImageOptimizationTestDTO("loading.gif", false, false, true),
-                new ImageOptimizationTestDTO("el_icon.gif", false, false, false),
-                new ImageOptimizationTestDTO("safe32.png", false, false, true),
-                new ImageOptimizationTestDTO("no_transparency.gif", false, false, true),
-                new ImageOptimizationTestDTO("doctype_16_sprite.png", false, false, false),
-                new ImageOptimizationTestDTO("addCol.gif", false, false, false),
-                new ImageOptimizationTestDTO("s-arrow-bo.gif", false, false, true)};
+        final ImageOptimizationTestDto[] imageOptimizationTestDtoList = {new ImageOptimizationTestDto("csv_120.png", false, false, true),
+                new ImageOptimizationTestDto("sharing_model2.jpg", false, false, true),
+                new ImageOptimizationTestDto("loading.gif", false, false, true),
+                new ImageOptimizationTestDto("el_icon.gif", false, false, false),
+                new ImageOptimizationTestDto("safe32.png", false, false, true),
+                new ImageOptimizationTestDto("no_transparency.gif", false, false, true),
+                new ImageOptimizationTestDto("doctype_16_sprite.png", false, false, false),
+                new ImageOptimizationTestDto("addCol.gif", false, false, false),
+                new ImageOptimizationTestDto("s-arrow-bo.gif", false, false, true)};
 
-        final int numberOfOptimizedImages = getNumberOfOptimizedImages(imageOptimizationTestDTOList);
+        final int numberOfOptimizedImages = getNumberOfOptimizedImages(imageOptimizationTestDtoList);
 
-        final List<File> filesToOptimize = new ArrayList<>(imageOptimizationTestDTOList.length);
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            filesToOptimize.add(imageOptimizationTestDTO.getMasterFile());
+        final List<File> filesToOptimize = new ArrayList<>(imageOptimizationTestDtoList.length);
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            filesToOptimize.add(imageOptimizationTestDto.getMasterFile());
         }
 
         //Testing with NONE
         List<OptimizationResult<Object>> results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 60).optimizeAllImages(FileTypeConversion.NONE, false, filesToOptimize);
-        assertNotNull(results);
+        assertThat(results, notNullValue());
 
         Map<String, OptimizationResult<Object>> treasureMap = new HashMap<>(numberOfOptimizedImages);
-        for(final OptimizationResult<Object> result : results) {
-            assertNotNull(result);
+        for (final OptimizationResult<Object> result : results) {
+            assertThat(result, notNullValue());
             treasureMap.put(result.getOriginalFile().getName(), result);
         }
 
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName()), imageOptimizationTestDTO, false);
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            validateFileOptimization(treasureMap.get(imageOptimizationTestDto.getMasterFile().getName()), imageOptimizationTestDto, false);
         }
-        assertEquals(numberOfOptimizedImages, treasureMap.size());
-        assertEquals(numberOfOptimizedImages, results.size());
+        assertThat(treasureMap, aMapWithSize(numberOfOptimizedImages));
+        assertThat(results, hasSize(numberOfOptimizedImages));
 
         //Testing with NONE and YES WebP
-        final int numberOfResultImages = numberOfOptimizedImages + getNumberOfWebPCompatibleImages(imageOptimizationTestDTOList);
+        final int numberOfResultImages = numberOfOptimizedImages + getNumberOfWebPCompatibleImages(imageOptimizationTestDtoList);
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 60).optimizeAllImages(FileTypeConversion.NONE, true, filesToOptimize);
-        assertNotNull(results);
+        assertThat(results, notNullValue());
 
         treasureMap = new HashMap<>(numberOfResultImages);
-        for(final OptimizationResult<Object> result : results) {
-            assertNotNull(result);
-            if(FilenameUtils.isExtension(result.getOptimizedFile().getName(), IImageOptimizationService.WEBP_EXTENSION)) {
+        for (final OptimizationResult<Object> result : results) {
+            assertThat(result, notNullValue());
+            if (FilenameUtils.isExtension(result.getOptimizedFile().getName(), IImageOptimizationService.WEBP_EXTENSION)) {
                 treasureMap.put(result.getOriginalFile().getName() + WEBP_ID, result);
             } else {
                 treasureMap.put(result.getOriginalFile().getName(), result);
             }
         }
 
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName()), imageOptimizationTestDTO, false);
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            validateFileOptimization(treasureMap.get(imageOptimizationTestDto.getMasterFile().getName()), imageOptimizationTestDto, false);
         }
-        assertEquals(numberOfResultImages, treasureMap.size());
-        assertEquals(numberOfResultImages, results.size());
+        assertThat(treasureMap, aMapWithSize(numberOfResultImages));
+        assertThat(results, hasSize(numberOfResultImages));
 
         //WebP Check
-        for(final ImageOptimizationTestDTO imageOptimizationTestDTO : imageOptimizationTestDTOList) {
-            if(imageOptimizationTestDTO.isJPEG() || imageOptimizationTestDTO.isAnimatedGif()) {
+        for (final ImageOptimizationTestDto imageOptimizationTestDto : imageOptimizationTestDtoList) {
+            if (imageOptimizationTestDto.isJPEG() || imageOptimizationTestDto.isAnimatedGif()) {
                 //JPEG is not converted to WEBP
-                assertNull(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID));
+                assertThat(treasureMap.get(imageOptimizationTestDto.getMasterFile().getName() + WEBP_ID), nullValue());
             } else {
-                validateFileOptimization(treasureMap.get(imageOptimizationTestDTO.getMasterFile().getName() + WEBP_ID), imageOptimizationTestDTO, true);
+                validateFileOptimization(treasureMap.get(imageOptimizationTestDto.getMasterFile().getName() + WEBP_ID), imageOptimizationTestDto, true);
             }
         }
 
         //Testing a null list of images
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 60).optimizeAllImages(FileTypeConversion.NONE, false, (Collection<File>)null);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
 
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 60).optimizeAllImages(FileTypeConversion.NONE, true, (Collection<File>)null);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
 
         //Testing an empty list of images
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 60).optimizeAllImages(FileTypeConversion.NONE, false, Collections.EMPTY_LIST);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
 
         results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION), 60).optimizeAllImages(FileTypeConversion.NONE, true, Collections.EMPTY_LIST);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+        assertThat(results, empty());
     }
 
     /**
@@ -767,46 +697,42 @@ public class ImageOptimizationServiceTest {
         //Test 1
         File workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "owner_key_icon.png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"), workingFile);
         long workingFileSize = workingFile.length();
 
         File optimizedFile = imageOptimizationService.executeAdvpng(workingFile, workingFile.getCanonicalPath());
-        assertNotNull(optimizedFile);
-        assertTrue(optimizedFile.exists());
-        assertEquals(workingFileSize, optimizedFile.length());
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(workingFileSize));
 
         //Test 2
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "csv_120.png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executeAdvpng(workingFile, workingFile.getCanonicalPath());
-        assertNotNull(optimizedFile);
-        assertTrue(optimizedFile.exists());
-        assertTrue(workingFileSize > optimizedFile.length());
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(lessThan(Long.valueOf(workingFileSize))));
 
         //Test 3
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "doctype_16_sprite.png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executeAdvpng(workingFile, workingFile.getCanonicalPath());
-        assertNotNull(optimizedFile);
-        assertTrue(optimizedFile.exists());
-        assertEquals(workingFileSize, optimizedFile.length());
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(workingFileSize));
 
         //Test 4
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "sprite arrow enlarge max min shrink x blue.gif.png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sprite arrow enlarge max min shrink x blue.gif.png"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sprite arrow enlarge max min shrink x blue.gif.png"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executeAdvpng(workingFile, workingFile.getCanonicalPath());
-        assertNotNull(optimizedFile);
-        assertTrue(optimizedFile.exists());
-        assertTrue(workingFileSize > optimizedFile.length());
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(lessThan(Long.valueOf(workingFileSize))));
     }
 
     /**
@@ -822,68 +748,67 @@ public class ImageOptimizationServiceTest {
         //Test 1
         File workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "owner_key_icon.png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"), workingFile);
         long workingFileSize = workingFile.length();
 
         File optimizedFile = imageOptimizationService.executePngquant(workingFile, workingFile.getCanonicalPath());
-        assertThat(optimizedFile, Matchers.notNullValue());
-        assertThat(Boolean.valueOf(optimizedFile.exists()), Matchers.equalTo(Boolean.TRUE));
-        assertThat(Long.valueOf(optimizedFile.length()), Matchers.equalTo(Long.valueOf(workingFileSize)));
+        assertThat(optimizedFile, notNullValue());
+        assertThat(Boolean.valueOf(optimizedFile.exists()), equalTo(Boolean.TRUE));
+        assertThat(Long.valueOf(optimizedFile.length()), equalTo(Long.valueOf(workingFileSize)));
 
         //Test 2
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "csv_120.png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executePngquant(workingFile, workingFile.getCanonicalPath());
-        assertThat(optimizedFile, Matchers.notNullValue());
-        assertThat(Boolean.valueOf(optimizedFile.exists()), Matchers.equalTo(Boolean.TRUE));
-        assertThat(Long.valueOf(optimizedFile.length()), Matchers.lessThan(Long.valueOf(workingFileSize)));
+        assertThat(optimizedFile, notNullValue());
+        assertThat(Boolean.valueOf(optimizedFile.exists()), equalTo(Boolean.TRUE));
+        assertThat(Long.valueOf(optimizedFile.length()), lessThan(Long.valueOf(workingFileSize)));
 
         //Test 3
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "csv_120.2png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.2png"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.2png"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executePngquant(workingFile, workingFile.getCanonicalPath());
-        assertThat(optimizedFile, Matchers.notNullValue());
-        assertThat(Boolean.valueOf(optimizedFile.exists()), Matchers.equalTo(Boolean.TRUE));
-        assertThat(Long.valueOf(optimizedFile.length()), Matchers.lessThan(Long.valueOf(workingFileSize)));
+        assertThat(optimizedFile, notNullValue());
+        assertThat(Boolean.valueOf(optimizedFile.exists()), equalTo(Boolean.TRUE));
+        assertThat(Long.valueOf(optimizedFile.length()), lessThan(Long.valueOf(workingFileSize)));
 
         //Test 4
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "safe32.png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/safe32.png"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/safe32.png"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executePngquant(workingFile, workingFile.getCanonicalPath());
-        assertThat(optimizedFile, Matchers.notNullValue());
-        assertThat(Boolean.valueOf(optimizedFile.exists()), Matchers.equalTo(Boolean.TRUE));
-        assertThat(Long.valueOf(optimizedFile.length()), Matchers.equalTo(Long.valueOf(workingFileSize)));
+        assertThat(optimizedFile, notNullValue());
+        assertThat(Boolean.valueOf(optimizedFile.exists()), equalTo(Boolean.TRUE));
+        assertThat(Long.valueOf(optimizedFile.length()), equalTo(Long.valueOf(workingFileSize)));
 
         //Test 5
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "doctype_16_sprite.png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executePngquant(workingFile, workingFile.getCanonicalPath());
-        assertThat(optimizedFile, Matchers.notNullValue());
-        assertThat(Boolean.valueOf(optimizedFile.exists()), Matchers.equalTo(Boolean.TRUE));
-        assertThat(Long.valueOf(optimizedFile.length()), Matchers.equalTo(Long.valueOf(workingFileSize)));
+            assertThat(optimizedFile, notNullValue());
+            assertThat(Boolean.valueOf(optimizedFile.exists()), equalTo(Boolean.TRUE));
+            assertThat(Long.valueOf(optimizedFile.length()), equalTo(Long.valueOf(workingFileSize)));
 
         //Test 6
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "sprite arrow enlarge max min shrink x blue.gif.png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sprite arrow enlarge max min shrink x blue.gif.png"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sprite arrow enlarge max min shrink x blue.gif.png"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executePngquant(workingFile, workingFile.getCanonicalPath());
-        assertThat(optimizedFile, Matchers.notNullValue());
-        assertThat(Boolean.valueOf(optimizedFile.exists()), Matchers.equalTo(Boolean.TRUE));
-        assertThat(Long.valueOf(optimizedFile.length()), Matchers.lessThan(Long.valueOf(workingFileSize)));
+        assertThat(Boolean.valueOf(optimizedFile.exists()), equalTo(Boolean.TRUE));
+        assertThat(optimizedFile, aFileWithSize(lessThan(Long.valueOf(workingFileSize))));
     }
 
     /**
@@ -900,48 +825,41 @@ public class ImageOptimizationServiceTest {
         //Test 1
         File workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "owner_key_icon.png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"), workingFile);
         long workingFileSize = workingFile.length();
 
         File optimizedFile = imageOptimizationService.executePngout(workingFile, workingFile.getCanonicalPath());
-        assertNotNull(optimizedFile);
-        assertTrue(optimizedFile.exists());
-        assertEquals(workingFileSize, optimizedFile.length());
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(workingFileSize));
 
         //Test 2
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "csv_120.png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executePngout(workingFile, workingFile.getCanonicalPath());
-        assertNotNull(optimizedFile);
-        assertTrue(optimizedFile.exists());
-        assertTrue(workingFileSize > optimizedFile.length());
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(lessThan(Long.valueOf(workingFileSize))));
 
         //Test 3
-        workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "doctype_16_sprite.png");
+        final File workingFile3 = new File(getTempDir().getCanonicalFile() + File.separator + "doctype_16_sprite.png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"), workingFile);
-        workingFileSize = workingFile.length();
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"), workingFile);
+        workingFileSize = workingFile3.length();
 
-        try {
-            optimizedFile = imageOptimizationService.executePngout(workingFile, workingFile.getCanonicalPath());
-            fail("Exepected a RuntimeException");
-        } catch(final ImageFileOptimizationException ifoe) {
-            assertEquals("Error while optimizing the file \"" + workingFile.getCanonicalPath() + "\"", ifoe.getMessage());
-        }
+        ImageFileOptimizationException actualException = assertThrows(ImageFileOptimizationException.class, () -> imageOptimizationService.executePngout(workingFile3, workingFile3.getCanonicalPath()));
+        assertThat(actualException.getMessage(), equalTo("Error while optimizing the file \"" + workingFile3.getCanonicalPath() + '"'));
 
         //Test 4
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "sprite arrow enlarge max min shrink x blue.gif.png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sprite arrow enlarge max min shrink x blue.gif.png"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sprite arrow enlarge max min shrink x blue.gif.png"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executePngout(workingFile, workingFile.getCanonicalPath());
-        assertNotNull(optimizedFile);
-        assertTrue(optimizedFile.exists());
-        assertTrue(workingFileSize > optimizedFile.length());
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(lessThan(Long.valueOf(workingFileSize))));
     }
 
     private final void testExecuteCWebpHelper(final File fileToConvert) throws IOException, InterruptedException {
@@ -952,14 +870,13 @@ public class ImageOptimizationServiceTest {
         final long workingFileSize = workingFile.length();
 
         final File optimizedFile = imageOptimizationService.executeCWebp(workingFile, workingFile.getCanonicalPath());
-        assertNotNull(optimizedFile);
-        assertTrue(optimizedFile.exists());
-        if(IImageOptimizationService.JPEG_EXTENSION.equalsIgnoreCase(FilenameUtils.getExtension(fileToConvert.getName()))) {
-            assertTrue(optimizedFile.length() > workingFileSize);
+        assertThat(optimizedFile, anExistingFile());
+        if (IImageOptimizationService.JPEG_EXTENSION.equalsIgnoreCase(FilenameUtils.getExtension(fileToConvert.getName()))) {
+            assertThat(optimizedFile, aFileWithSize(greaterThan(Long.valueOf(workingFileSize))));
         } else {
-            assertTrue(workingFileSize > optimizedFile.length());
+            assertThat(optimizedFile, aFileWithSize(lessThan(Long.valueOf(workingFileSize))));
         }
-        assertEquals(IImageOptimizationService.WEBP_EXTENSION, FilenameUtils.getExtension(optimizedFile.getName()));
+        assertThat(optimizedFile, FileMatchers.aFileNamed(endsWith(IImageOptimizationService.WEBP_EXTENSION)));
     }
 
     /**
@@ -972,12 +889,12 @@ public class ImageOptimizationServiceTest {
      */
     @Test
     public void testExecuteCWebp() throws IOException, InterruptedException {
-        testExecuteCWebpHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"));
-        testExecuteCWebpHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"));
-        testExecuteCWebpHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"));
-        testExecuteCWebpHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/safe32.png"));
-        testExecuteCWebpHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sharing_model2.jpg"));
-        testExecuteCWebpHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sprite arrow enlarge max min shrink x blue.gif.png"));
+        testExecuteCWebpHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"));
+        testExecuteCWebpHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"));
+        testExecuteCWebpHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"));
+        testExecuteCWebpHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/safe32.png"));
+        testExecuteCWebpHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sharing_model2.jpg"));
+        testExecuteCWebpHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sprite arrow enlarge max min shrink x blue.gif.png"));
     }
 
     private final void testExecuteGif2WebHelper(final File fileToConvert) throws IOException, InterruptedException {
@@ -988,10 +905,9 @@ public class ImageOptimizationServiceTest {
         final long workingFileSize = workingFile.length();
 
         final File optimizedFile = imageOptimizationService.executeGif2Webp(workingFile, workingFile.getCanonicalPath());
-        assertNotNull(optimizedFile);
-        assertTrue(optimizedFile.exists());
-        assertTrue(workingFileSize > optimizedFile.length());
-        assertEquals(IImageOptimizationService.WEBP_EXTENSION, FilenameUtils.getExtension(optimizedFile.getName()));
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(lessThan(Long.valueOf(workingFileSize))));
+        assertThat(optimizedFile, FileMatchers.aFileNamed(endsWith(IImageOptimizationService.WEBP_EXTENSION)));
     }
 
     /**
@@ -1004,11 +920,11 @@ public class ImageOptimizationServiceTest {
      */
     @Test
     public void testExecuteGif2Web() throws IOException, InterruptedException {
-        testExecuteGif2WebHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/el_icon.gif"));
-        testExecuteGif2WebHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/loading.gif"));
-        testExecuteGif2WebHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/no_transparency.gif"));
-        testExecuteGif2WebHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/addCol.gif"));
-        testExecuteGif2WebHelper(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/s arrow bo.gif"));
+        testExecuteGif2WebHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/el_icon.gif"));
+        testExecuteGif2WebHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/loading.gif"));
+        testExecuteGif2WebHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/no_transparency.gif"));
+        testExecuteGif2WebHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/addCol.gif"));
+        testExecuteGif2WebHelper(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/s arrow bo.gif"));
     }
 
     /**
@@ -1024,33 +940,30 @@ public class ImageOptimizationServiceTest {
 
         File workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "owner_key_icon.png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/owner_key_icon.png"), workingFile);
         long workingFileSize = workingFile.length();
 
         File optimizedFile = imageOptimizationService.executeOptipng(workingFile, workingFile.getCanonicalPath());
-        assertNotNull(optimizedFile);
-        assertTrue(optimizedFile.exists());
-        assertEquals(workingFileSize, optimizedFile.length());
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(workingFileSize));
 
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "csv_120.png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executeOptipng(workingFile, workingFile.getCanonicalPath());
-        assertNotNull(optimizedFile);
-        assertTrue(optimizedFile.exists());
-        assertTrue(workingFileSize > optimizedFile.length());
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(lessThan(Long.valueOf(workingFileSize))));
 
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "doctype_16_sprite.png");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executeOptipng(workingFile, workingFile.getCanonicalPath());
-        assertNotNull(optimizedFile);
-        assertTrue(optimizedFile.exists());
-        assertTrue(workingFileSize > optimizedFile.length());
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(lessThan(Long.valueOf(workingFileSize))));
     }
 
     /**
@@ -1066,24 +979,23 @@ public class ImageOptimizationServiceTest {
         //Test 1
         File workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "sharing_model2.jpg");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sharing_model2.jpg"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sharing_model2.jpg"), workingFile);
         long workingFileSize = workingFile.length();
 
         File optimizedFile = imageOptimizationService.executeJpegtran(workingFile, workingFile.getCanonicalPath());
-        assertNotNull(optimizedFile);
-        assertTrue(optimizedFile.exists());
-        assertEquals(workingFileSize, optimizedFile.length());
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(workingFileSize));
 
         //Test 2
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "sharin g model2.jpg");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sharin g model2.jpg"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sharin g model2.jpg"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executeJpegtran(workingFile, workingFile.getCanonicalPath());
-        assertNotNull(optimizedFile);
-        assertTrue(optimizedFile.exists());
-        assertEquals(workingFileSize, optimizedFile.length());
+
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(workingFileSize));
     }
 
     /**
@@ -1100,24 +1012,22 @@ public class ImageOptimizationServiceTest {
         //Test 1
         File workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "sharing_model2.jpg");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sharing_model2.jpg"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sharing_model2.jpg"), workingFile);
         long workingFileSize = workingFile.length();
 
         File optimizedFile = imageOptimizationService.executeJfifremove(workingFile, workingFile.getCanonicalPath());
-        assertNotNull(optimizedFile);
-        assertTrue(optimizedFile.exists());
-        assertTrue(workingFileSize > optimizedFile.length());
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(lessThan(Long.valueOf(workingFileSize))));
 
         //Test 2
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "sharin g model2.jpg");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/sharin g model2.jpg"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sharin g model2.jpg"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executeJfifremove(workingFile, workingFile.getCanonicalPath());
-        assertNotNull(optimizedFile);
-        assertTrue(optimizedFile.exists());
-        assertTrue(workingFileSize > optimizedFile.length());
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(lessThan(Long.valueOf(workingFileSize))));
     }
 
     /**
@@ -1132,68 +1042,62 @@ public class ImageOptimizationServiceTest {
         //Test 1
         File workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "el_icon.gif");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/el_icon.gif"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/el_icon.gif"), workingFile);
         long workingFileSize = workingFile.length();
 
         File optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
-        assertThat(optimizedFile, Matchers.notNullValue(File.class));
-        assertTrue(optimizedFile.exists());
-        assertThat(Long.valueOf(optimizedFile.length()), Matchers.equalTo(Long.valueOf(workingFileSize)));
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(workingFileSize));
 
         //Test 2
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "loading.gif");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/loading.gif"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/loading.gif"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
-        assertThat(optimizedFile, Matchers.notNullValue(File.class));
-        assertTrue(optimizedFile.exists());
-        assertTrue(workingFileSize > optimizedFile.length());
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(lessThan(Long.valueOf(workingFileSize))));
 
         //Test 3
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "no_transparency.gif");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/no_transparency.gif"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/no_transparency.gif"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
-        assertThat(optimizedFile, Matchers.notNullValue(File.class));
-        assertTrue(optimizedFile.exists());
-        assertThat(Long.valueOf(optimizedFile.length()), Matchers.lessThan(Long.valueOf(workingFileSize)));
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(lessThan(Long.valueOf(workingFileSize))));
 
         //Test 4
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "addCol.gif");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/addCol.gif"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/addCol.gif"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
-        assertThat(optimizedFile, Matchers.notNullValue(File.class));
-        assertTrue(optimizedFile.exists());
-        assertThat(Long.valueOf(optimizedFile.length()), Matchers.equalTo(Long.valueOf(workingFileSize)));
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(workingFileSize));
 
         //Test 5
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "s-arrow-bo.gif");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/s-arrow-bo.gif"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/s-arrow-bo.gif"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
-        assertThat(optimizedFile, Matchers.notNullValue(File.class));
-        assertTrue(optimizedFile.exists());
-        assertThat(Long.valueOf(optimizedFile.length()), Matchers.lessThan(Long.valueOf(workingFileSize)));
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(lessThan(Long.valueOf(workingFileSize))));
 
         //Test 6
         workingFile = new File(getTempDir().getCanonicalFile() + File.separator + "s arrow bo.gif");
 
-        FixedFileUtils.copyFile(new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service/s arrow bo.gif"), workingFile);
+        FixedFileUtils.copyFile(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/s arrow bo.gif"), workingFile);
         workingFileSize = workingFile.length();
 
         optimizedFile = imageOptimizationService.executeGifsicle(workingFile, workingFile.getCanonicalPath());
-        assertThat(optimizedFile, Matchers.notNullValue(File.class));
-        assertTrue(optimizedFile.exists());
-        assertThat(Long.valueOf(optimizedFile.length()), Matchers.lessThan(Long.valueOf(workingFileSize)));
+        assertThat(optimizedFile, anExistingFile());
+        assertThat(optimizedFile, aFileWithSize(lessThan(Long.valueOf(workingFileSize))));
     }
 
     /**
@@ -1205,10 +1109,10 @@ public class ImageOptimizationServiceTest {
     public void testGetFinalResultsDirectory() throws IOException {
         final File tmpDir = getTempDir();
 
-        assertEquals(tmpDir.getCanonicalPath() + File.separator + "final", (new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION))).getFinalResultsDirectory());
+        assertThat(new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION)).getFinalResultsDirectory(), equalTo(tmpDir.getCanonicalPath() + File.separator + "final"));
     }
 
-    private static class ImageOptimizationTestDTO {
+    private static final class ImageOptimizationTestDto {
 
         private final File masterFile;
         private final long masterFileChecksum;
@@ -1228,14 +1132,14 @@ public class ImageOptimizationServiceTest {
          *                    optimized.
          * @throws IOException Thrown when calculating the masterFileChecksum
          */
-        ImageOptimizationTestDTO(final String fileName, final boolean failedAutomatedTest, final boolean fileTypeChanged, final boolean isOptimized) throws IOException {
-            masterFile = new File("./test/com/salesforce/perfeng/uiperf/imageoptimization/service" + File.separator + fileName);
-            assertTrue(masterFile.exists());
+        ImageOptimizationTestDto(final String fileName, final boolean failedAutomatedTest, final boolean fileTypeChanged, final boolean isOptimized) throws IOException {
+            masterFile = new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service" + File.separator + fileName);
+            assertThat(masterFile, anExistingFile());
             masterFileChecksum = FileUtils.checksumCRC32(masterFile);
             this.failedAutomatedTest = failedAutomatedTest;
             this.fileTypeChanged = fileTypeChanged;
             this.isJPEG = (IImageOptimizationService.JPEG_EXTENSION.equalsIgnoreCase(FilenameUtils.getExtension(fileName)));
-            this.isAnimatedGif = ImageUtils.isAminatedGif(masterFile);
+            this.isAnimatedGif = ImageUtils.isAminatedGif (masterFile);
             this.isOptimized = isOptimized;
         }
 
@@ -1259,6 +1163,28 @@ public class ImageOptimizationServiceTest {
         }
         public boolean isOptimized() {
             return isOptimized;
+        }
+
+        @SuppressWarnings("boxing")
+        @Override
+        public int hashCode() {
+            return Objects.hash(failedAutomatedTest, fileTypeChanged, isAnimatedGif, isJPEG, isOptimized, masterFile,
+                    masterFileChecksum);
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof ImageOptimizationTestDto)) {
+                return false;
+            }
+            ImageOptimizationTestDto other = (ImageOptimizationTestDto) obj;
+            return failedAutomatedTest == other.failedAutomatedTest && fileTypeChanged == other.fileTypeChanged
+                    && isAnimatedGif == other.isAnimatedGif && isJPEG == other.isJPEG
+                    && isOptimized == other.isOptimized && Objects.equals(masterFile, other.masterFile)
+                    && masterFileChecksum == other.masterFileChecksum;
         }
     }
 }

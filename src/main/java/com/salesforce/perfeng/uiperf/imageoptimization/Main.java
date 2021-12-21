@@ -75,11 +75,12 @@ public class Main {
      */
     public final static String IMAGE_OPTIMIZATION_BINARY_LOCATION;
     static {
-        if (!"linux".equals(System.getProperty("os.name").toLowerCase())) {
+        final String os = System.getProperty("os.name").toLowerCase();
+        if (!"linux".equals(os) && !"mac os x".equals(os)) {
             throw new UnsupportedOperationException("Your OS is not supported by this application. Currently only linux is supported");
         }
         IMAGE_OPTIMIZATION_BINARY_LOCATION = System.getProperty("binariesDirectory");
-        if((IMAGE_OPTIMIZATION_BINARY_LOCATION == null) || IMAGE_OPTIMIZATION_BINARY_LOCATION.isEmpty()) {
+        if ((IMAGE_OPTIMIZATION_BINARY_LOCATION == null) || IMAGE_OPTIMIZATION_BINARY_LOCATION.isEmpty()) {
             throw new IllegalArgumentException("Missing location for the image optimization binaries. From the commandline add \"-DbinariesDirectory=<PATH_TO_BINARIES_DIRECTORY>\"");
         }
     }
@@ -100,19 +101,19 @@ public class Main {
      */
     public static void main(final String[] args) throws ImageFileOptimizationException, IOException, TimeoutException {
 
-        if(args.length == 0) {
+        if (args.length == 0) {
             logger.warn("Missing main method arguments. No files to optimize.");
             return;
         }
 
         final Set<File> imagesToOptimize = new TreeSet<>();
         File file;
-        for(final String path : args) {
+        for (final String path : args) {
             file = new File(path);
-            if(!file.exists()) {
+            if (!file.exists()) {
                 throw new IllegalArgumentException("The file \"" + path + "\" does not exist.");
             }
-            if(file.isFile()) {
+            if (file.isFile()) {
                 imagesToOptimize.add(file);
             } else {
                 imagesToOptimize.addAll(getAllImages(path));
@@ -134,13 +135,13 @@ public class Main {
      *         {@code false}.
      */
     private static final boolean isValidContentType(final String contentType, final String extension) {
-        if(PNG_EXTENSION.equals(extension)) {
+        if (PNG_EXTENSION.equals(extension)) {
             return PNG_MIME_TYPE.equals(contentType);
         }
-        if(GIF_EXTENSION.equals(extension)) {
+        if (GIF_EXTENSION.equals(extension)) {
             return GIF_MIME_TYPE.equals(contentType);
         }
-        if(JPEG_EXTENSION.equals(extension) || JPEG_EXTENSION2.equals(extension) || JPEG_EXTENSION3.equals(extension)) {
+        if (JPEG_EXTENSION.equals(extension) || JPEG_EXTENSION2.equals(extension) || JPEG_EXTENSION3.equals(extension)) {
             return JPEG_MIME_TYPE.equals(contentType);
         }
         return false;
@@ -157,22 +158,22 @@ public class Main {
     private static List<File> getAllImages(final String... rootDirectories) throws IOException  {
 
         final List<File> images = new ArrayList<>();
-        for(final String rootDirectory : rootDirectories) {
+        for (final String rootDirectory : rootDirectories) {
             logger.info("Starting with {} at {}", rootDirectory, new Date());
             InputStream is = null;
             final Collection<File> c = FileUtils.listFiles(new File(rootDirectory), IImageOptimizationService.SUPPORTED_FILE_EXTENSIONS, true);
-            for(final File image : c) {
+            for (final File image : c) {
                 try {
                     is = new BufferedInputStream(new FileInputStream(image));
                     final String contentType = URLConnection.guessContentTypeFromStream(is);
 
-                    if(isValidContentType(contentType, FilenameUtils.getExtension(image.getName()).toLowerCase())) {
+                    if (isValidContentType(contentType, FilenameUtils.getExtension(image.getName()).toLowerCase())) {
                         images.add(image);
-                    } else if(image.length() > 0) {
+                    } else if (image.length() > 0) {
                         logger.warn("Skipping file. Unexpected content type for file\n\tfile: {}\n\tcontentType: {}", image.getPath(), contentType);
                     }
                 } finally {
-                    if(is != null) {
+                    if (is != null) {
                         try {
                             is.close();
                         } catch (final IOException ignore) {
