@@ -76,7 +76,7 @@ import com.salesforce.perfeng.uiperf.imageoptimization.utils.ImageUtils;
 public class ImageOptimizationService<C> implements IImageOptimizationService<C> {
 
     /**
-     * Log4j2 logger for this class and inner classes.
+     * slf4j logger for this class and inner classes.
      */
     final static Logger logger = LoggerFactory.getLogger(ImageOptimizationService.class);
 
@@ -280,7 +280,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
         optipngBinaryPath    = binaryDirectoryPath + OPTIPNG_BINARY;
         pngoutBinaryPath     = binaryDirectoryPath + PNGOUT_BINARY;
         pngquantBinaryPath   = binaryDirectoryPath + PNGQUANT_BINARY;
-        imageUtils = new ImageUtils(binaryDirectoryPath);
+        imageUtils           = new ImageUtils(binaryDirectoryPath);
     }
 
     /**
@@ -579,7 +579,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
         final Process ps;
         try {
-            ps = new ProcessBuilder(advpngBinaryPath, "-z", "-4", workingFilePath)
+            ps = new ProcessBuilder(List.of(advpngBinaryPath, "-z", "-4", workingFilePath))
                 .redirectErrorStream(true)
                 .start();
         } catch(final IOException ioe) {
@@ -611,7 +611,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
         try {
             // Slightly different from the other binary calls because PNG out
             // displays an error when long file paths are used.
-            ps = new ProcessBuilder(pngoutBinaryPath, workingFile.getName(), workingFile.getName(), "-y")
+            ps = new ProcessBuilder(List.of(pngoutBinaryPath, workingFile.getName(), workingFile.getName(), "-y"))
                 .directory(workingFile.getParentFile())
                 .redirectErrorStream(true)
                 .start();
@@ -651,7 +651,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
         try {
             // Slightly different from the other binary calls because PNG out
             // displays an error when long file paths are used.
-            ps = new ProcessBuilder(pngquantBinaryPath, "--quality=100-100", "-s1", "--ext", ".png2", "--force", "--", workingFile.getName())
+            ps = new ProcessBuilder(List.of(pngquantBinaryPath, "--quality=100-100", "-s1", "--ext", ".png2", "--force", "--", workingFile.getName()))
                 .directory(workingFile.getParentFile())
                 .redirectErrorStream(true)
                 .start();
@@ -702,7 +702,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
         final Process ps;
         try {
-            ps = new ProcessBuilder(optipngBinaryPath, "-o7", "-zm1-9", workingFilePath)
+            ps = new ProcessBuilder(List.of(optipngBinaryPath, "-o7", "-zm1-9", workingFilePath))
                 .redirectErrorStream(true)
                 .start();
         } catch(final IOException ioe) {
@@ -730,7 +730,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
         final Process ps;
         try {
-            ps = new ProcessBuilder(jpegtranBinaryPath, "-copy", "none", "-optimize", "-outfile", workingFilePath + ".tmp", workingFilePath)
+            ps = new ProcessBuilder(List.of(jpegtranBinaryPath, "-copy", "none", "-optimize", "-outfile", workingFilePath + ".tmp", workingFilePath))
                 .redirectErrorStream(true)
                 .start();
         } catch(final IOException ioe) {
@@ -767,7 +767,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
         try {
             //Can't redirect the Error stream because it is already redirecting
             //the output.
-            ps = new ProcessBuilder("bash", "-c", jfifremoveBinaryPath + " < \"" + workingFilePath + "\" > \"" + workingFilePath + ".tmp2\"")
+            ps = new ProcessBuilder(List.of("bash", "-c", jfifremoveBinaryPath + " < \"" + workingFilePath + "\" > \"" + workingFilePath + ".tmp2\""))
                 .start();
         } catch(final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(JFIFREMOVE_BINARY, ioe);
@@ -795,7 +795,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
         final Process ps;
         try {
-            ps = new ProcessBuilder(gifsicleBinaryPath, "-O3", workingFilePath, "-o", workingFilePath + ".tmp")
+            ps = new ProcessBuilder(List.of(gifsicleBinaryPath, "-O3", workingFilePath, "-o", workingFilePath + ".tmp"))
                 .redirectErrorStream(true)
                 .start();
         } catch(final IOException ioe) {
@@ -832,7 +832,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
         final Process ps;
         try {
-            ps = new ProcessBuilder(cwebpBinaryPath, workingFilePath, "-lossless", "-m", "6", "-o", webpFilePath)
+            ps = new ProcessBuilder(List.of(cwebpBinaryPath, workingFilePath, "-lossless", "-m", "6", "-o", webpFilePath))
                 .redirectErrorStream(true)
                 .start();
         } catch(final IOException ioe) {
@@ -869,7 +869,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
         final Process ps;
         try {
-            ps = new ProcessBuilder(gif2webpBinaryPath, workingFilePath, "-m", "6", "-o", webpFilePath)
+            ps = new ProcessBuilder(List.of(gif2webpBinaryPath, workingFilePath, "-m", "6", "-o", webpFilePath))
                 .redirectErrorStream(true)
                 .start();
         } catch(final IOException ioe) {

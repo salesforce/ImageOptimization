@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -236,7 +237,7 @@ public class ImageUtils {
     public final void convertImageNative(final File fromImage, final File toImage) throws InterruptedException, ThirdPartyBinaryNotFoundException {
         final Process ps;
         try {
-            ps = new ProcessBuilder(convertBinaryAppLocation, fromImage.getCanonicalPath(), toImage.getCanonicalPath())
+            ps = new ProcessBuilder(List.of(convertBinaryAppLocation, fromImage.getCanonicalPath(), toImage.getCanonicalPath()))
                     .start();
         } catch(final IOException ioe) {
             throw new ThirdPartyBinaryNotFoundException(convertBinaryAppLocation, "Most likely this is due to ImageMagic not being installed on the OS. On Ubuntu run \"sudo apt-get install imagemagick\".", ioe);
