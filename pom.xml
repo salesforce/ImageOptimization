@@ -116,6 +116,10 @@ Note: It only runs on Linux and requires additional binaries</description>
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+            </plugin>
         </plugins>
     </build>
     
