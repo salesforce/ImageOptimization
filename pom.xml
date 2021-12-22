@@ -21,8 +21,8 @@ It can also...
 Note: It only runs on Linux and requires additional binaries</description>
     <inceptionYear>2013</inceptionYear>
     <scm>
-        <connection>scm:git:git://github.com/salesforce/ImageOptimization</connection>
-        <developerConnection>scm:git:github.com/salesforce/ImageOptimization</developerConnection>
+        <connection>scm:git:git://github.com/salesforce/ImageOptimization.git</connection>
+        <developerConnection>scm:git:github.com/salesforce/ImageOptimization.git</developerConnection>
         <url>https://github.com/salesforce/ImageOptimization</url>
       <tag>ImageOptimization-2.0.0</tag>
   </scm>
