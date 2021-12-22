@@ -3,11 +3,11 @@
 
     <groupId>com.salesforce.perfeng.uiperf</groupId>
     <artifactId>ImageOptimization</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.0-M1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>ImageOptimization</name>
-    <url>https://github.com/SalesforceEng/ImageOptimization</url>
+    <url>https://github.com/salesforce/ImageOptimization</url>
 
     <organization>
         <name>Salesforce</name>
@@ -21,11 +21,10 @@ It can also...
 Note: It only runs on Linux and requires additional binaries</description>
     <inceptionYear>2013</inceptionYear>
     <scm>
-        <connection>scm:git:git://github.com/SalesforceEng/ImageOptimization</connection>
-        <developerConnection>scm:git:github.com/SalesforceEng/ImageOptimization</developerConnection>
-        <url>https://github.com/SalesforceEng/ImageOptimization</url>
-      <tag>ImageOptimization-2.0.0</tag>
-  </scm>
+        <connection>scm:git:git://github.com/salesforce/ImageOptimization</connection>
+        <developerConnection>scm:git:github.com/salesforce/ImageOptimization</developerConnection>
+        <url>https://github.com/salesforce/ImageOptimization</url>
+    </scm>
     
     <licenses>
         <license>
