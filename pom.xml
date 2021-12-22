@@ -1,14 +1,13 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.salesforce.perfeng.uiperf</groupId>
     <artifactId>ImageOptimization</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.0-M1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>ImageOptimization</name>
-    <url>https://github.com/SalesforceEng/ImageOptimization</url>
+    <url>https://github.com/salesforce/ImageOptimization</url>
 
     <organization>
         <name>Salesforce</name>
@@ -22,10 +21,11 @@ It can also...
 Note: It only runs on Linux and requires additional binaries</description>
     <inceptionYear>2013</inceptionYear>
     <scm>
-        <connection>scm:git:git://github.com/SalesforceEng/ImageOptimization</connection>
-        <developerConnection>scm:git:github.com/SalesforceEng/ImageOptimization</developerConnection>
-        <url>https://github.com/SalesforceEng/ImageOptimization</url>
-    </scm>
+        <connection>scm:git:git://github.com/salesforce/ImageOptimization.git</connection>
+        <developerConnection>scm:git:git@github.com:salesforce/ImageOptimization.git</developerConnection>
+        <url>https://github.com/salesforce/ImageOptimization</url>
+        <tag>HEAD</tag>
+  </scm>
     
     <licenses>
         <license>
