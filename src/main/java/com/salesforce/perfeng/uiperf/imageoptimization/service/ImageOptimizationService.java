@@ -1291,6 +1291,57 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		return masterListOfOptimizedFiles;
 	}
 
+	// Windows is not happy multithreading the optimization, probably due to concurrent file access
+	// at this point it is fit for purpose to call it sequentially rather than in parallel, not
+	// attempting to fix this issue
+	public File optimizeImage(final File masterFile, final boolean includeWebPConversion)
+		throws ImageFileOptimizationException, TimeoutException, IOException {
+
+		File optimizedFile;
+		File workingFile = new File(tmpWorkingDirectory.getAbsolutePath() + File.separatorChar + masterFile.getName());
+
+		FixedFileUtils.copyFile(masterFile, workingFile);
+
+		final long masterFileSize = masterFile.length();
+
+		try {
+			final String ext = FilenameUtils.getExtension(workingFile.getName()).toLowerCase();
+			if (PNG_EXTENSION.equals(ext)) {
+				optimizedFile = executeAdvpng(workingFile,
+					new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
+						.append(workingFile.getName()).toString());
+				if (includeWebPConversion) {
+					optimizedFile = executeCWebp(optimizedFile,
+						new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
+							.append(workingFile.getName()).toString());
+				}
+			} else if (GIF_EXTENSION.equals(ext)) {
+				optimizedFile = executeGifsicle(workingFile,
+					new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
+						.append(workingFile.getName()).toString());
+				if (includeWebPConversion) {
+					optimizedFile = executeGif2Webp(optimizedFile,
+						new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
+							.append(workingFile.getName()).toString());
+				}
+			} else if (JPEG_EXTENSION.equals(ext) || JPEG_EXTENSION2.equals(ext) || JPEG_EXTENSION3.equals(ext)) {
+				optimizedFile = executeJpegtran(workingFile,
+					new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
+						.append(workingFile.getName()).toString());
+			} else {
+				throw new IllegalArgumentException("The passed in file has an unsupported file extension.");
+			}
+			if (optimizedFile.length() < masterFileSize) {
+				return optimizedFile;
+			} else {
+				return masterFile;
+			}
+
+		} catch (final Exception e) {
+			throw ImageFileOptimizationException.getInstance(masterFile, e);
+		}
+	}
+
 	/**
 	 * Submits the {@link Callable} that will optimize the passed in image.
 	 *

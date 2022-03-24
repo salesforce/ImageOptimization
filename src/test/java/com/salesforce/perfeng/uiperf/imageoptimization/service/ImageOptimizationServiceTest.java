@@ -27,10 +27,12 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.io.FileMatchers.aFileWithSize;
 import static org.hamcrest.io.FileMatchers.anExistingFile;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -933,6 +935,54 @@ public class ImageOptimizationServiceTest {
 		results = new ImageOptimizationService<>(getTempDir(), new File(DEFAULT_BINARY_APP_LOCATION))
 			.optimizeAllImages(FileTypeConversion.ALL, true, Collections.EMPTY_LIST);
 		assertThat(results, empty());
+	}
+
+	/**
+	 * Test for {@link ImageOptimizationService#optimizeAllImages(FileTypeConversion, boolean, java.util.Collection)}.
+	 *
+	 * @throws IOException
+	 *             can be thrown by the <code>ImageOptimizationService</code> constructor or when creating a temp file used in the
+	 *             test
+	 * @throws IOException
+	 *             Thrown if there is an issue reading from the file system.
+	 * @throws TimeoutException
+	 *             Thrown if it takes to long to optimize an image.
+	 * @throws ImageFileOptimizationException
+	 *             Thrown if there is an error trying to optimize an image.
+	 * @throws URISyntaxException
+	 */
+	@Test
+	public void testOptimizeAllImagesALLBasic() throws Exception {
+
+		File tmpDir = getTempDir();
+
+		imageOptimizationService = new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION));
+
+		final File[] beforeFiles = new File[] {
+				new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/csv_120.png"),
+				new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/sharing_model2.jpg"),
+				new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/loading.gif"),
+				new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/el_icon.gif"),
+				new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/safe32.png"),
+				new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/no_transparency.gif"),
+				new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/doctype_16_sprite.png"),
+				new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/addCol.gif"),
+				new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/service/s-arrow-bo.gif")
+		};
+
+		// Testing with ALL and YES WebP
+		List<OptimizationResult<Object>> results =
+			new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION))
+				.optimizeAllImages(FileTypeConversion.ALL, true, beforeFiles);
+		assertThat(results, notNullValue());
+
+		File[] afterFiles = new File[results.size()];
+		int i = 0;
+		for (OptimizationResult<Object> result : results) {
+			afterFiles[i++] = result.getOptimizedFile();
+		}
+
+		assertEquals(beforeFiles.length, afterFiles.length);
 	}
 
 	/**
