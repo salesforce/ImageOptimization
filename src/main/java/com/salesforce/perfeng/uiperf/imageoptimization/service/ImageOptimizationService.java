@@ -1294,11 +1294,11 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	// Windows is not happy multithreading the optimization, probably due to concurrent file access
 	// at this point it is fit for purpose to call it sequentially rather than in parallel, not
 	// attempting to fix this issue
-	public File optimizeImage(final File masterFile, final boolean includeWebPConversion)
+	public File optimizeImage(final File masterFile, final boolean toWebP)
 		throws ImageFileOptimizationException, TimeoutException, IOException {
 
-		File optimizedFile;
 		File workingFile = new File(tmpWorkingDirectory.getAbsolutePath() + File.separatorChar + masterFile.getName());
+		File optimizedFile = workingFile;
 
 		FixedFileUtils.copyFile(masterFile, workingFile);
 
@@ -1307,10 +1307,43 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		try {
 			final String ext = FilenameUtils.getExtension(workingFile.getName()).toLowerCase();
 			if (PNG_EXTENSION.equals(ext)) {
-				optimizedFile = executeAdvpng(workingFile,
-					new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
-						.append(workingFile.getName()).toString());
-				if (includeWebPConversion) {
+				String path = tmpWorkingDirectory.getAbsolutePath() + File.separatorChar + workingFile.getName();
+				try {
+					optimizedFile = executeAdvpng(workingFile, path);
+				} catch (Exception e) {
+					// do nothing
+				}
+				try {
+					optimizedFile = executePngout(optimizedFile, path);
+				} catch (Exception e) {
+					// do nothing
+				}
+				try {
+					optimizedFile = executeOptipng(optimizedFile, path);
+				} catch (Exception e) {
+					// do nothing
+				}
+				try {
+					optimizedFile = executePngquant(optimizedFile, path);
+				} catch (Exception e) {
+					// do nothing
+				}
+				try {
+					optimizedFile = executeAdvpng(optimizedFile, path);
+				} catch (Exception e) {
+					// do nothing
+				}
+				try {
+					optimizedFile = executeOptipng(optimizedFile, path);
+				} catch (Exception e) {
+					// do nothing
+				}
+				try {
+					optimizedFile = executePngquant(optimizedFile, path);
+				} catch (Exception e) {
+					// do nothing
+				}
+				if (toWebP) {
 					optimizedFile = executeCWebp(optimizedFile,
 						new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
 							.append(workingFile.getName()).toString());
@@ -1319,25 +1352,41 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 				optimizedFile = executeGifsicle(workingFile,
 					new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
 						.append(workingFile.getName()).toString());
-				if (includeWebPConversion) {
+				if (toWebP) {
 					optimizedFile = executeGif2Webp(optimizedFile,
 						new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
 							.append(workingFile.getName()).toString());
+				} else {
+					// rename tmp to gif
+					File newFile =
+						new File(FilenameUtils.removeExtension(optimizedFile.getAbsolutePath()));
+					if (newFile.exists()) {
+						newFile.delete();
+					}
+					optimizedFile.renameTo(newFile);
+					optimizedFile = newFile;
 				}
 			} else if (JPEG_EXTENSION.equals(ext) || JPEG_EXTENSION2.equals(ext) || JPEG_EXTENSION3.equals(ext)) {
 				optimizedFile = executeJpegtran(workingFile,
 					new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
 						.append(workingFile.getName()).toString());
+				if (toWebP) {
+					optimizedFile = executeCWebp(optimizedFile,
+						new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
+							.append(workingFile.getName()).toString());
+				}
 			} else {
 				throw new IllegalArgumentException("The passed in file has an unsupported file extension.");
 			}
-			if (optimizedFile.length() < masterFileSize) {
+			if (toWebP || optimizedFile.length() < masterFileSize) {
 				return optimizedFile;
 			} else {
 				return masterFile;
 			}
 
-		} catch (final Exception e) {
+		} catch (
+
+		final Exception e) {
 			throw ImageFileOptimizationException.getInstance(masterFile, e);
 		}
 	}
