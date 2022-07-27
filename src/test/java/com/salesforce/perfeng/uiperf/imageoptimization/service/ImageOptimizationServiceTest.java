@@ -44,6 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -91,9 +92,7 @@ public class ImageOptimizationServiceTest {
      */
     @BeforeEach
     public void setUp() throws IOException {
-        final File tmpDir = File.createTempFile(ImageOptimizationServiceTest.class.getName(), "");
-        tmpDir.delete();
-        tmpDir.mkdir();
+        final File tmpDir = Files.createTempDirectory(ImageOptimizationServiceTest.class.getName()).toFile();
         tmpDir.deleteOnExit();
 
         imageOptimizationService = new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION));
@@ -120,9 +119,7 @@ public class ImageOptimizationServiceTest {
         actualException = assertThrows(IllegalArgumentException.class, () -> new ImageOptimizationService<>(file, new File(DEFAULT_BINARY_APP_LOCATION)));
         assertThat(actualException.getMessage(), matchesRegex("The passed in tmpWorkingDirectory, \".+\", needs to be a directory."));
 
-        final File tmpDir = File.createTempFile(ImageOptimizationServiceTest.class.getName(), "");
-        tmpDir.delete();
-        tmpDir.mkdir();
+        final File tmpDir = Files.createTempDirectory(ImageOptimizationServiceTest.class.getName()).toFile();
         tmpDir.deleteOnExit();
         assertThat(new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION)), notNullValue());
     }
@@ -150,9 +147,7 @@ public class ImageOptimizationServiceTest {
         actualException = assertThrows(IllegalArgumentException.class, () -> new ImageOptimizationService<>(file, new File(DEFAULT_BINARY_APP_LOCATION), 1));
         assertThat(actualException.getMessage(), matchesRegex("The passed in tmpWorkingDirectory, \".+\", needs to be a directory."));
 
-        File tmpDir = File.createTempFile(ImageOptimizationServiceTest.class.getName(), "");
-        tmpDir.delete();
-        tmpDir.mkdir();
+        File tmpDir = Files.createTempDirectory(ImageOptimizationServiceTest.class.getName()).toFile();
         tmpDir.deleteOnExit();
         assertThat(new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION), 1), notNullValue());
 
@@ -166,9 +161,7 @@ public class ImageOptimizationServiceTest {
         file2.deleteOnExit();
         actualException = assertThrows(IllegalArgumentException.class, () -> new ImageOptimizationService<>(file2, new File(DEFAULT_BINARY_APP_LOCATION), 0));
 
-        tmpDir = File.createTempFile(ImageOptimizationServiceTest.class.getName(), "");
-        tmpDir.delete();
-        tmpDir.mkdir();
+        tmpDir = Files.createTempDirectory(ImageOptimizationServiceTest.class.getName()).toFile();
         tmpDir.deleteOnExit();
         assertThat(new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION), 0), notNullValue());
     }
@@ -222,9 +215,7 @@ public class ImageOptimizationServiceTest {
     }
 
     private static final File getTempDir() throws IOException {
-        final File tmpDir = File.createTempFile(ImageOptimizationServiceTest.class.getName(), "");
-        tmpDir.delete();
-        tmpDir.mkdir();
+        final File tmpDir = Files.createTempDirectory(ImageOptimizationServiceTest.class.getName()).toFile();
         tmpDir.deleteOnExit();
         return tmpDir;
     }
