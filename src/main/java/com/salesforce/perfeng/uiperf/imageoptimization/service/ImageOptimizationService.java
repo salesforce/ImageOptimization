@@ -1360,16 +1360,17 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 						new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
 							.append(workingFile.getName()).toString());
 					optimizedFiles.add(webPFile);
-				} else {
-					// rename tmp to gif
-					File newFile =
-						new File(FilenameUtils.removeExtension(optimizedFile.getAbsolutePath()));
-					if (newFile.exists()) {
-						newFile.delete();
-					}
-					optimizedFile.renameTo(newFile);
-					optimizedFile = newFile;
 				}
+
+				// rename tmp to gif
+				File newFile =
+					new File(FilenameUtils.removeExtension(optimizedFile.getAbsolutePath()));
+				if (newFile.exists()) {
+					newFile.delete();
+				}
+				optimizedFile.renameTo(newFile);
+				optimizedFile = newFile;
+
 			} else if (JPEG_EXTENSION.equals(ext) || JPEG_EXTENSION2.equals(ext) || JPEG_EXTENSION3.equals(ext)) {
 				optimizedFile = executeJpegtran(workingFile,
 					new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
