@@ -1294,11 +1294,13 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	// Windows is not happy multithreading the optimization, probably due to concurrent file access
 	// at this point it is fit for purpose to call it sequentially rather than in parallel, not
 	// attempting to fix this issue
-	public File optimizeImage(final File masterFile, final boolean toWebP)
+	public List<File> optimizeImage(final File masterFile, final boolean toWebP)
 		throws ImageFileOptimizationException, TimeoutException, IOException {
 
 		File workingFile = new File(tmpWorkingDirectory.getAbsolutePath() + File.separatorChar + masterFile.getName());
 		File optimizedFile = workingFile;
+		File webPFile;
+		List<File> optimizedFiles = new ArrayList<File>();
 
 		FixedFileUtils.copyFile(masterFile, workingFile);
 
@@ -1344,18 +1346,20 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 					// do nothing
 				}
 				if (toWebP) {
-					optimizedFile = executeCWebp(optimizedFile,
+					webPFile = executeCWebp(optimizedFile,
 						new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
 							.append(workingFile.getName()).toString());
+					optimizedFiles.add(webPFile);
 				}
 			} else if (GIF_EXTENSION.equals(ext)) {
 				optimizedFile = executeGifsicle(workingFile,
 					new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
 						.append(workingFile.getName()).toString());
 				if (toWebP) {
-					optimizedFile = executeGif2Webp(optimizedFile,
+					webPFile = executeGif2Webp(optimizedFile,
 						new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
 							.append(workingFile.getName()).toString());
+					optimizedFiles.add(webPFile);
 				} else {
 					// rename tmp to gif
 					File newFile =
@@ -1371,18 +1375,21 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 					new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
 						.append(workingFile.getName()).toString());
 				if (toWebP) {
-					optimizedFile = executeCWebp(optimizedFile,
+					webPFile = executeCWebp(optimizedFile,
 						new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
 							.append(workingFile.getName()).toString());
+					optimizedFiles.add(webPFile);
 				}
 			} else {
 				throw new IllegalArgumentException("The passed in file has an unsupported file extension.");
 			}
-			if (toWebP || optimizedFile.length() < masterFileSize) {
-				return optimizedFile;
+			if (optimizedFile.length() < masterFileSize) {
+				optimizedFiles.add(optimizedFile);
 			} else {
-				return masterFile;
+				optimizedFiles.add(masterFile);
+
 			}
+			return optimizedFiles;
 
 		} catch (
 
