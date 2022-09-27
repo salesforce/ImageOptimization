@@ -42,7 +42,6 @@ import java.util.concurrent.TimeoutException;
 
 import javax.imageio.ImageIO;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -92,6 +91,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		public OptimizationResult<C> call() {
 
 			File optimizedFile = null;
+			final long masterFileSize = masterFile.length();
 			try {
 				boolean fileTypeChanged = false;
 
@@ -159,11 +159,12 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 					}
 				}
 
-				final long masterFileSize = masterFile.length();
 				if (optimizedFile.length() < masterFileSize) {
 					final File finalFile = copyFileToMinifiedDirectory(masterFile, optimizedFile, fileTypeChanged);
 					if (finalFile == null) {
-						return null;
+						copyFileToMinifiedDirectory(masterFile, masterFile, false);
+						return new OptimizationResult<>(masterFile, masterFileSize, masterFile, masterFileSize, false,
+							false, false);
 					}
 					final boolean automatedOptimizationFailed;
 					try {
@@ -174,7 +175,9 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 						if ((cause instanceof NullPointerException)
 							&& "getImageTypes".equals(cause.getStackTrace()[0].getMethodName())) {
 							logger.debug("The optimized image is corrupted and could not be read.", ifoe);
-							return null;
+							copyFileToMinifiedDirectory(masterFile, masterFile, false);
+							return new OptimizationResult<>(masterFile, masterFileSize, masterFile, masterFileSize, false,
+								false, false);
 						}
 						throw ifoe;
 					}
@@ -188,14 +191,18 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 				logger.warn(GIF_ERROR_MESSAGE,
 					new ImageFileOptimizationException(masterFile.getPath(), workingFile.getPath(), e.getMessage(), e));
 			} finally {
-				try {
-					FileUtils.forceDelete(workingFile.getParentFile());
-				} catch (final IOException ioe) {
-					logger.warn("Error deleting temp file.", ioe);
-				}
+				/*
+				 * try { FileUtils.forceDelete(workingFile.getParentFile()); } catch (final IOException ioe) {
+				 * logger.warn("Error deleting temp file.", ioe); }
+				 */
 			}
-
-			return null;
+			try {
+				copyFileToMinifiedDirectory(masterFile, masterFile, false);
+			} catch (IOException e) {
+				logger.warn(GIF_ERROR_MESSAGE, new ImageFileOptimizationException(masterFile.getPath(), e));
+			}
+			return new OptimizationResult<>(masterFile, masterFileSize, masterFile, masterFileSize, false,
+				false, false);
 		}
 
 		private boolean isFileTypeConversionEnabled(final File optimizedFile) {
@@ -237,18 +244,19 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		public OptimizationResult<C> call() {
 
 			File optimizedFile = null;
+			final long masterFileSize = masterFile.length();
 			try {
 				FixedFileUtils.copyFile(masterFile, workingFile);
 
 				optimizedFile = executeJpegtran(workingFile, workingFile.getCanonicalPath());
 				optimizedFile = executeJfifremove(optimizedFile, optimizedFile.getCanonicalPath());
 
-				final long masterFileSize = masterFile.length();
-
 				if (optimizedFile.length() < masterFileSize) {
 					final File finalFile = copyFileToMinifiedDirectory(masterFile, optimizedFile, false);
 					if (finalFile == null) {
-						return null;
+						copyFileToMinifiedDirectory(masterFile, masterFile, false);
+						return new OptimizationResult<>(masterFile, masterFileSize, masterFile, masterFileSize, false,
+							false, false);
 					}
 
 					return new OptimizationResult<>(finalFile, finalFile.length(), masterFile, masterFileSize, false,
@@ -260,14 +268,20 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 				logger.warn(JPEG_ERROR_MESSAGE, new ImageFileOptimizationException(masterFile.getPath(), e));
 			} finally {
 				if (optimizedFile != null) {
-					try {
-						FileUtils.forceDelete(optimizedFile.getParentFile());
-					} catch (final IOException ioe) {
-						logger.warn("Error deleting temp file.", ioe);
-					}
+					/*
+					 * try { FileUtils.forceDelete(optimizedFile); } catch (final IOException ioe) {
+					 * logger.warn("Error deleting temp file.", ioe); }
+					 */
+					// this might need to go back in to clean up temp files
 				}
 			}
-			return null;
+			try {
+				copyFileToMinifiedDirectory(masterFile, masterFile, false);
+			} catch (IOException e) {
+				logger.warn(JPEG_ERROR_MESSAGE, new ImageFileOptimizationException(masterFile.getPath(), e));
+			}
+			return new OptimizationResult<>(masterFile, masterFileSize, masterFile, masterFileSize, false,
+				false, false);
 		}
 	}
 
@@ -299,18 +313,19 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		public OptimizationResult<C> call() {
 
 			File optimizedFile = null;
+			final long masterFileSize = masterFile.length();
 			try {
 				FixedFileUtils.copyFile(masterFile, workingFile);
 
 				optimizedFile = executeOptimization();
 
-				final long masterFileSize = masterFile.length();
-
 				if (optimizedFile.length() < masterFileSize) {
 
 					final File finalFile = copyFileToMinifiedDirectory(masterFile, optimizedFile, false);
 					if (finalFile == null) {
-						return null;
+						copyFileToMinifiedDirectory(masterFile, masterFile, false);
+						return new OptimizationResult<>(masterFile, masterFileSize, masterFile, masterFileSize, false,
+							false, false);
 					}
 					return new OptimizationResult<>(finalFile, finalFile.length(), masterFile, masterFileSize, false,
 						!ImageUtils.visuallyCompare(optimizedFile, masterFile), false);
@@ -320,15 +335,18 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 			} catch (final Exception e) {
 				logger.warn(PNG_ERROR_MESSAGE, new ImageFileOptimizationException(masterFile.getPath(), e));
 			} finally {
-				if (optimizedFile != null) {
-					try {
-						FileUtils.forceDelete(optimizedFile.getParentFile());
-					} catch (final IOException ioe) {
-						logger.warn("Error deleting temp file.", ioe);
-					}
-				}
+				/*
+				 * if (optimizedFile != null) { try { FileUtils.forceDelete(optimizedFile.getParentFile()); } catch (final
+				 * IOException ioe) { logger.warn("Error deleting temp file.", ioe); } }
+				 */
 			}
-			return null;
+			try {
+				copyFileToMinifiedDirectory(masterFile, masterFile, false);
+			} catch (IOException e) {
+				logger.warn(JPEG_ERROR_MESSAGE, new ImageFileOptimizationException(masterFile.getPath(), e));
+			}
+			return new OptimizationResult<>(masterFile, masterFileSize, masterFile, masterFileSize, false,
+				false, false);
 		}
 
 		/**
@@ -382,39 +400,27 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		public OptimizationResult<C> call() {
 
 			File optimizedFile = null;
+			final long masterFileSize = masterFile.length();
 			try {
 				FixedFileUtils.copyFile(masterFile, workingFile);
 
-				if (!isGif || !ImageUtils.isAminatedGif(workingFile)) {
+				optimizedFile = isGif ? executeGif2Webp(workingFile, workingFile.getCanonicalPath())
+					: executeCWebp(workingFile, workingFile.getCanonicalPath());
+				final File finalFile = copyFileToMinifiedDirectory(masterFile, optimizedFile, true);
+				return new OptimizationResult<>(finalFile, finalFile.length(), masterFile, masterFileSize, true, false,
+					true);
 
-					optimizedFile = isGif ? executeGif2Webp(workingFile, workingFile.getCanonicalPath())
-						: executeCWebp(workingFile, workingFile.getCanonicalPath());
-
-					final long masterFileSize = masterFile.length();
-
-					if (optimizedFile.length() < masterFileSize) {
-						final File finalFile = copyFileToMinifiedDirectory(masterFile, optimizedFile, true);
-						if (finalFile == null) {
-							return null;
-						}
-						return new OptimizationResult<>(finalFile, finalFile.length(), masterFile, masterFileSize, true, false,
-							true);
-					}
-				}
 			} catch (final ThirdPartyBinaryNotFoundException tpbnfe) {
 				throw tpbnfe;
 			} catch (final Exception e) {
 				logger.warn(WEBP_ERROR_MESSAGE, new ImageFileOptimizationException(masterFile.getPath(), e));
 			} finally {
-				if (optimizedFile != null) {
-					try {
-						FileUtils.forceDelete(optimizedFile.getParentFile());
-					} catch (final IOException ioe) {
-						logger.warn("Error deleting temp file.", ioe);
-					}
-				}
+				/*
+				 * if (optimizedFile != null) { try { FileUtils.forceDelete(optimizedFile.getParentFile()); } catch (final
+				 * IOException ioe) { logger.warn("Error deleting temp file.", ioe); } }
+				 */
 			}
-			return null;
+			return new OptimizationResult<>(masterFile, masterFileSize, masterFile, masterFileSize, false, false, false);
 		}
 	}
 
@@ -626,26 +632,24 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
 	private final int				MAX_NUMBER_OF_THREADS	= Runtime.getRuntime().availableProcessors();
 
-	private final ExecutorService	executorService			=
-		Executors.newFixedThreadPool(MAX_NUMBER_OF_THREADS, new ThreadFactory() {
-																	/**
-																	 * Makes the thread daemon threads so they can be killed
-																	 * automatically when the parent thread is done running
-																	 *
-																	 * @see java.util.concurrent.ThreadFactory#newThread(java.lang.Runnable)
-																	 */
-																	@Override
-																	public Thread newThread(final Runnable runnable) {
-																		final Thread thread =
-																			Executors.defaultThreadFactory().newThread(runnable);
-																		thread.setDaemon(true);
-																		return thread;
-																	}
-																});
+	private final ExecutorService	executorService			= Executors.newFixedThreadPool(MAX_NUMBER_OF_THREADS, new ThreadFactory() {
+																/**
+																 * Makes the thread daemon threads so they can be killed
+																 * automatically when the parent thread is done running
+																 *
+																 * @see java.util.concurrent.ThreadFactory#newThread(java.lang.Runnable)
+																 */
+																@Override
+																public Thread newThread(final Runnable runnable) {
+																	final Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+																	thread.setDaemon(true);
+																	return thread;
+																}
+															});
 
 	private final File				tmpWorkingDirectory;
 
-	private final String			finalWorkingDirectoryPath;
+	private String					minifiedDirectoryPath;
 
 	private final int				timeoutInSeconds;
 
@@ -700,8 +704,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		}
 		this.tmpWorkingDirectory = tmpWorkingDirectory.getCanonicalFile();
 
-		finalWorkingDirectoryPath =
-			new StringBuilder(tmpWorkingDirectory.getCanonicalPath()).append(File.separatorChar).append("final").toString();
+		minifiedDirectoryPath = tmpWorkingDirectory.getCanonicalPath() + File.separator + "final" + File.separator;
 
 		this.timeoutInSeconds = timeoutInSeconds;
 
@@ -764,10 +767,10 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	File copyFileToMinifiedDirectory(final File masterFile, final File workingFile, final boolean fileTypeChanged)
 		throws IOException {
 
-		final StringBuilder sb = new StringBuilder(finalWorkingDirectoryPath);
+		final StringBuilder sb = new StringBuilder(minifiedDirectoryPath);
 
 		if (fileTypeChanged) {
-			final StringBuilder newFilePath = new StringBuilder(FilenameUtils.removeExtension(masterFile.getAbsolutePath()))
+			final StringBuilder newFilePath = new StringBuilder(FilenameUtils.removeExtension(masterFile.getName()))
 				.append('.').append(FilenameUtils.getExtension(workingFile.getName()));
 			if (new File(newFilePath.toString()).exists()) {
 				if (logger.isInfoEnabled()) {
@@ -779,7 +782,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 			}
 			sb.append(newFilePath);
 		} else {
-			sb.append(masterFile.getAbsolutePath());
+			sb.append(masterFile.getName());
 		}
 
 		final File minifiedFile = new File(sb.toString());
@@ -1177,7 +1180,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 	 */
 	@Override
 	public String getFinalResultsDirectory() {
-		return finalWorkingDirectoryPath;
+		return minifiedDirectoryPath;
 	}
 
 	/**
@@ -1291,112 +1294,13 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 		return masterListOfOptimizedFiles;
 	}
 
-	// Windows is not happy multithreading the optimization, probably due to concurrent file access
-	// at this point it is fit for purpose to call it sequentially rather than in parallel, not
-	// attempting to fix this issue
-	public List<File> optimizeImage(final File masterFile, final boolean toWebP)
-		throws ImageFileOptimizationException, TimeoutException, IOException {
+	public File optimizeImage(File file, boolean includeWebPConversion) throws ImageFileOptimizationException, TimeoutException {
+		List<OptimizationResult<C>> results = optimizeAllImages(FileTypeConversion.ALL, includeWebPConversion, file);
+		return results.get(0).getOptimizedFile();
+	}
 
-		File workingFile = new File(tmpWorkingDirectory.getAbsolutePath() + File.separatorChar + masterFile.getName());
-		File optimizedFile = workingFile;
-		File webPFile;
-		List<File> optimizedFiles = new ArrayList<File>();
-
-		FixedFileUtils.copyFile(masterFile, workingFile);
-
-		final long masterFileSize = masterFile.length();
-
-		try {
-			final String ext = FilenameUtils.getExtension(workingFile.getName()).toLowerCase();
-			if (PNG_EXTENSION.equals(ext)) {
-				String path = tmpWorkingDirectory.getAbsolutePath() + File.separatorChar + workingFile.getName();
-				try {
-					optimizedFile = executeAdvpng(workingFile, path);
-				} catch (Exception e) {
-					// do nothing
-				}
-				try {
-					optimizedFile = executePngout(optimizedFile, path);
-				} catch (Exception e) {
-					// do nothing
-				}
-				try {
-					optimizedFile = executeOptipng(optimizedFile, path);
-				} catch (Exception e) {
-					// do nothing
-				}
-				try {
-					optimizedFile = executePngquant(optimizedFile, path);
-				} catch (Exception e) {
-					// do nothing
-				}
-				try {
-					optimizedFile = executeAdvpng(optimizedFile, path);
-				} catch (Exception e) {
-					// do nothing
-				}
-				try {
-					optimizedFile = executeOptipng(optimizedFile, path);
-				} catch (Exception e) {
-					// do nothing
-				}
-				try {
-					optimizedFile = executePngquant(optimizedFile, path);
-				} catch (Exception e) {
-					// do nothing
-				}
-				if (toWebP) {
-					webPFile = executeCWebp(optimizedFile,
-						new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
-							.append(workingFile.getName()).toString());
-					optimizedFiles.add(webPFile);
-				}
-			} else if (GIF_EXTENSION.equals(ext)) {
-				optimizedFile = executeGifsicle(workingFile,
-					new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
-						.append(workingFile.getName()).toString());
-				if (toWebP) {
-					webPFile = executeGif2Webp(optimizedFile,
-						new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
-							.append(workingFile.getName()).toString());
-					optimizedFiles.add(webPFile);
-				}
-
-				// rename tmp to gif
-				File newFile =
-					new File(FilenameUtils.removeExtension(optimizedFile.getAbsolutePath()));
-				if (newFile.exists()) {
-					newFile.delete();
-				}
-				optimizedFile.renameTo(newFile);
-				optimizedFile = newFile;
-
-			} else if (JPEG_EXTENSION.equals(ext) || JPEG_EXTENSION2.equals(ext) || JPEG_EXTENSION3.equals(ext)) {
-				optimizedFile = executeJpegtran(workingFile,
-					new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
-						.append(workingFile.getName()).toString());
-				if (toWebP) {
-					webPFile = executeCWebp(optimizedFile,
-						new StringBuilder(tmpWorkingDirectory.getAbsolutePath()).append(File.separatorChar)
-							.append(workingFile.getName()).toString());
-					optimizedFiles.add(webPFile);
-				}
-			} else {
-				throw new IllegalArgumentException("The passed in file has an unsupported file extension.");
-			}
-			if (optimizedFile.length() < masterFileSize) {
-				optimizedFiles.add(optimizedFile);
-			} else {
-				optimizedFiles.add(masterFile);
-
-			}
-			return optimizedFiles;
-
-		} catch (
-
-		final Exception e) {
-			throw ImageFileOptimizationException.getInstance(masterFile, e);
-		}
+	public void setMinifiedDirectoryPath(String minifiedDirectoryPath) {
+		this.minifiedDirectoryPath = minifiedDirectoryPath;
 	}
 
 	/**
@@ -1445,6 +1349,12 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 				futures.add(completionService.submit(new ExecuteJpegOptimization(file.getCanonicalFile(),
 					new File(new StringBuilder(tmpImageWorkingDirectory).append(file.getName()).toString()),
 					conversionType)));
+				if (includeWebPConversion) {
+					futures.add(completionService.submit(new ExecuteWebpConversion(
+						file.getCanonicalFile(), new File(new StringBuilder(tmpImageWorkingDirectory)
+							.append(IImageOptimizationService.WEBP_EXTENSION).append(file.getName()).toString()),
+						false)));
+				}
 			} else {
 				throw new IllegalArgumentException("The passed in file has an unsupported file extension.");
 			}

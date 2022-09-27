@@ -260,7 +260,13 @@ public class ImageOptimizationServiceTest {
 		tmpDir.mkdir();
 		tmpDir.deleteOnExit();
 
+		final File minifiedDir = File.createTempFile(ImageOptimizationServiceTest.class.getSimpleName() + "final", "");
+		minifiedDir.delete();
+		minifiedDir.mkdir();
+		minifiedDir.deleteOnExit();
+
 		imageOptimizationService = new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION));
+		imageOptimizationService.setMinifiedDirectoryPath(minifiedDir.getCanonicalPath());
 	}
 
 	/**
@@ -746,9 +752,8 @@ public class ImageOptimizationServiceTest {
 	@Test
 	public void testGetFinalResultsDirectory() throws IOException {
 		final File tmpDir = getTempDir();
-
 		assertThat(new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION)).getFinalResultsDirectory(),
-			equalTo(tmpDir.getCanonicalPath() + File.separator + "final"));
+			equalTo(tmpDir.getCanonicalPath() + File.separator + "final" + File.separatorChar));
 	}
 
 	/**
@@ -792,7 +797,8 @@ public class ImageOptimizationServiceTest {
 	public void testImageOptimizationService2() throws IOException {
 		// Input file does not exist.
 		IllegalArgumentException actualException = assertThrows(IllegalArgumentException.class,
-			() -> new ImageOptimizationService<>(File.createTempFile("qqq", "qqq"), new File(DEFAULT_BINARY_APP_LOCATION), 1));
+			() -> new ImageOptimizationService<>(File.createTempFile("qqq", "qqq"), new File(DEFAULT_BINARY_APP_LOCATION),
+				1));
 		assertThat(actualException.getMessage(),
 			matchesRegex("^The passed in tmpWorkingDirectory, \".+\", needs to be a directory.$"));
 
@@ -815,7 +821,8 @@ public class ImageOptimizationServiceTest {
 		assertThat(new ImageOptimizationService<>(tmpDir, new File(DEFAULT_BINARY_APP_LOCATION), 1), notNullValue());
 
 		actualException = assertThrows(IllegalArgumentException.class,
-			() -> new ImageOptimizationService<>(File.createTempFile("qqq", "qqq"), new File(DEFAULT_BINARY_APP_LOCATION), 0));
+			() -> new ImageOptimizationService<>(File.createTempFile("qqq", "qqq"), new File(DEFAULT_BINARY_APP_LOCATION),
+				0));
 
 		actualException = assertThrows(IllegalArgumentException.class,
 			() -> new ImageOptimizationService<>(null, new File(DEFAULT_BINARY_APP_LOCATION), 0));
