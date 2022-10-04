@@ -346,9 +346,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
             logger.debug("Current local directory is: {}", new File(".").getCanonicalPath());
         }
 
-        final File tmpDir = File.createTempFile(ImageOptimizationService.class.getName(), "");
-        tmpDir.delete();
-        tmpDir.mkdir();
+        final File tmpDir = Files.createTempDirectory(ImageOptimizationService.class.getName()).toFile();
         return new ImageOptimizationService<>(tmpDir, new File(pathToBinaryProgramsForImageOptimizationDirectory).getCanonicalFile(), timeoutInSeconds);
     }
 
