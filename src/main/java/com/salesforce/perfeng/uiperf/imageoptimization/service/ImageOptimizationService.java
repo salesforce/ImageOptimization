@@ -862,7 +862,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
 		final Process ps;
 		try {
-			ps = new ProcessBuilder(List.of(cwebpBinaryPath, workingFilePath, "-lossless", "-m", "6", "-o", webpFilePath))
+			ps = new ProcessBuilder(List.of(cwebpBinaryPath, workingFilePath, "-m", "6", "-o", webpFilePath))
 				.redirectErrorStream(true)
 				.redirectOutput(Redirect.INHERIT)
 				.start();
@@ -902,7 +902,7 @@ public class ImageOptimizationService<C> implements IImageOptimizationService<C>
 
 		final Process ps;
 		try {
-			ps = new ProcessBuilder(List.of(gif2webpBinaryPath, workingFilePath, "-m", "6", "-o", webpFilePath))
+			ps = new ProcessBuilder(List.of(gif2webpBinaryPath, workingFilePath, "-lossy", "-m", "6", "-o", webpFilePath))
 				.redirectErrorStream(true)
 				.redirectOutput(Redirect.INHERIT)
 				.start();
