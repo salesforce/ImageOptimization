@@ -28,9 +28,9 @@ Apart from optimizing an image, it also supports a few other things
 
 A few binaries needed by the code have to be installed on the OS.
 
-_Note: This only works on Linux and has only been tested on Ubuntu.  There are a number of non-java binaries that are required for this project and I have only tried compiling them for for Linux, specifically Ubuntu._
+_Note: This only works on Linux and Windows has only been tested on Ubuntu and Windows 10.  There are a number of non-java binaries that are required for this project and I have only tried compiling them for for Linux, specifically Ubuntu, and Windows, specifically Windows 10._
 * [ImageMagick](https://www.imagemagick.org/script/binary-releases.php) needs to be installed on the system (used for converting images because JAVA cannot handle certain file types).
-* The following binaries need to be compiled into the root of the project in the `<PROJECT_DIRECTORY>/lib/binary/linux` directory.
+* The following binaries need to be compiled into the root of the project in the `<PROJECT_DIRECTORY>/lib/binary/linux` or `<PROJECT_DIRECTORY>/lib/binary/windows` directory.
   * advpng ([source](https://github.com/amadvance/advancecomp/), [homepage](http://advancemame.sourceforge.net/doc-advpng.html))
   * gifsicle ([source](https://www.lcdf.org/gifsicle/gifsicle-1.88.tar.gz), [homepage](https://www.lcdf.org/gifsicle/))
   * jfifremove ([source](https://lyncd.com/files/imgopt/jfifremove.c))
@@ -66,7 +66,7 @@ Calling the main method from the commandline with a list of files or folders.
 
     java -jar ImageOptimization-1.2.jar -DbinariesDirectory=<PATH_TO_BINARIES_DIRECTORY> path/to/image.png path/to/folder/of/images/
 
-The `<PATH_TO_BINARIES_DIRECTORY>` is the path where the binaries exist that are used to optimize the images. By default the code will look for the binaries in the `./lib/binary/linux/` directory
+The `<PATH_TO_BINARIES_DIRECTORY>` is the path where the binaries exist that are used to optimize the images. By default the code will look for the binaries in the `./lib/binary/linux/` and directories `./lib/binary/windows/`
 
 You can also call this code programmatically from existing JAVA code by using the API, `com.salesforce.perfeng.uiperf.imageoptimization.service.ImageOptimizationService.optimizeAllImages(FileTypeConversion, boolean, Collection<File>)`.
 

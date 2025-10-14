@@ -35,241 +35,248 @@ import com.salesforce.perfeng.uiperf.ThirdPartyBinaryNotFoundException;
  */
 public class ImageUtils {
 
-    private final static Logger logger = LoggerFactory.getLogger(ImageUtils.class);
+	private final static Logger	logger			= LoggerFactory.getLogger(ImageUtils.class);
 
-    /**
-     * Name of Image Magic's {@value #CONVERT_BINARY} binary application used to
-     * convert one image into another image by changing it's file type. This
-     * application needs to be installed on the system this JAVA app is running
-     * on.
-     */
-    static final String CONVERT_BINARY = "convert";
-    
-    private final String convertBinaryAppLocation;
+	/**
+	 * Run ImageMagick's convert command on the command line (may require amending in future, as ImageMagick V7+ uses command
+	 * "magick" rather than convert
+	 */
+	static final String			CONVERT_BINARY	= "convert";
 
-    /**
-     * Constructor.
-     * 
-     * @param binaryAppLocation The directory location where the convert
-     *      application is located
-     */
-    public ImageUtils(final String binaryAppLocation) {
-        this.convertBinaryAppLocation = binaryAppLocation + CONVERT_BINARY;
-    }
-    
-    private static final boolean equals(final int[] data1, final int[] data2) {
-        final int length = data1.length;
-        if (length != data2.length) {
-            logger.debug("File lengths are different.");
-            return false;
-        }
-        for (int i = 0; i < length; i++) {
-            if (data1[i] != data2[i]) {
+	/**
+	 * @param file
+	 *            The image to check
+	 * @return <code>true</code> if the image contains one or more pixels with some percentage of transparency (Alpha)
+	 */
+	public final static boolean containsAlphaTransparency(final File file) {
+		logger.debug("Start Alpha pixel check for {}.", file.getPath());
 
-                //If the alpha is 0 for both that means that the pixels are 100%
-                //transparent and the color does not matter. Return false if
-                //only 1 is 100% transparent.
-                if ((((data1[i] >> 24) & 0xff) != 0) || (((data2[i] >> 24) & 0xff) != 0)) {
-                    logger.debug("The pixel {} is different.", Integer.valueOf(i));
-                    return false;
-                }
-                logger.debug("Both pixles at spot {} are different but 100% transparent.", Integer.valueOf(i));
-            }
-        }
-        logger.debug("Both groups of pixels are the same.");
-        return true;
-    }
+		final boolean answer = false;
+		for (final int pixel : getPixels(getBufferedImage(file), file)) {
+			// If the alpha is 0 for both that means that the pixels are 100%
+			// transparent and the color does not matter. Return false if
+			// only 1 is 100% transparent.
+			if (((pixel >> 24) & 0xff) != 255) {
+				logger.debug("The image contains Aplha Transparency.");
+				return true;
+			}
+		}
 
-    private static final int[] getPixels(final BufferedImage img, final File file) {
+		logger.debug("The image does not contain Aplha Transparency.");
+		logger.debug("End Alpha pixel check for {}.", file.getPath());
 
-        final int width = img.getWidth();
-        final int height = img.getHeight();
-        final int[] pixelData = new int[width * height];
+		return answer;
+	}
 
-        final Image pixelImg;
-        if (img.getColorModel().getColorSpace() == ColorSpace.getInstance(ColorSpace.CS_sRGB)) {
-            pixelImg = img;
-        } else {
-            pixelImg = new ColorConvertOp(ColorSpace.getInstance(ColorSpace.CS_sRGB), null).filter(img, null);
-        }
+	private static final boolean equals(final int[] data1, final int[] data2) {
+		final int length = data1.length;
+		if (length != data2.length) {
+			logger.debug("File lengths are different.");
+			return false;
+		}
+		for (int i = 0; i < length; i++) {
+			if (data1[i] != data2[i]) {
 
-        final PixelGrabber pg = new PixelGrabber(pixelImg, 0, 0, width, height, pixelData, 0, width);
+				// If the alpha is 0 for both that means that the pixels are 100%
+				// transparent and the color does not matter. Return false if
+				// only 1 is 100% transparent.
+				if ((((data1[i] >> 24) & 0xff) != 0) || (((data2[i] >> 24) & 0xff) != 0)) {
+					logger.debug("The pixel {} is different.", Integer.valueOf(i));
+					return false;
+				}
+				logger.debug("Both pixles at spot {} are different but 100% transparent.", Integer.valueOf(i));
+			}
+		}
+		logger.debug("Both groups of pixels are the same.");
+		return true;
+	}
 
-        try {
-            if (!pg.grabPixels()) {
-                throw new RuntimeException();
-            }
-        } catch (final InterruptedException ie) {
-            throw new ImageFileOptimizationException(file.getPath(), ie);
-        }
+	/**
+	 * Gets the {@link BufferedImage} from the passed in {@link File}.
+	 *
+	 * @param file
+	 *            The <code>File</code> to use.
+	 * @return The resulting <code>BufferedImage</code>
+	 */
+	@SuppressWarnings("unused")
+	final static BufferedImage getBufferedImage(final File file) {
+		Image image;
 
-        return pixelData;
-    }
+		try (final FileInputStream inputStream = new FileInputStream(file)) {
+			// ImageIO.read(file) is broken for some images so I went this
+			// route
+			image = Toolkit.getDefaultToolkit().createImage(file.getCanonicalPath());
 
-    /**
-     * Gets the {@link BufferedImage} from the passed in {@link File}.
-     *
-     * @param file The <code>File</code> to use.
-     * @return The resulting <code>BufferedImage</code>
-     */
-    @SuppressWarnings("unused")
-    final static BufferedImage getBufferedImage(final File file) {
-        Image image;
+			// forces the image to be rendered
+			new ImageIcon(image);
+		} catch (final Exception e2) {
+			throw new ImageFileOptimizationException(file.getPath(), e2);
+		}
 
-        try (final FileInputStream inputStream = new FileInputStream(file)) {
-            // ImageIO.read(file) is broken for some images so I went this
-            // route
-            image = Toolkit.getDefaultToolkit().createImage(file.getCanonicalPath());
+		final BufferedImage converted = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+		final Graphics2D g2d = converted.createGraphics();
+		g2d.drawImage(image, 0, 0, null);
+		g2d.dispose();
+		return converted;
+	}
 
-            //forces the image to be rendered
-            new ImageIcon(image);
-        } catch(final Exception e2) {
-            throw new ImageFileOptimizationException(file.getPath(), e2);
-        }
+	private static final int[] getPixels(final BufferedImage img, final File file) {
 
-        final BufferedImage converted = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-        final Graphics2D g2d = converted.createGraphics();
-        g2d.drawImage(image, 0, 0, null);
-        g2d.dispose();
-        return converted;
-    }
+		final int width = img.getWidth();
+		final int height = img.getHeight();
+		final int[] pixelData = new int[width * height];
 
-    /**
-     * Compares file1 to file2 to see if they are the same based on a visual
-     * pixel by pixel comparison. This has issues with marking images different
-     * when they are not. Works perfectly for all images.
-     *
-     * @param file1 First file to compare
-     * @param file2 Second image to compare
-     * @return <code>true</code> if they are equal, otherwise
-     *         <code>false</code>.
-     */
-    private final static boolean visuallyCompareJava(final File file1, final File file2) {
-        return equals(getPixels(getBufferedImage(file1), file1), getPixels(getBufferedImage(file2), file2));
-    }
+		final Image pixelImg;
+		if (img.getColorModel().getColorSpace() == ColorSpace.getInstance(ColorSpace.CS_sRGB)) {
+			pixelImg = img;
+		} else {
+			pixelImg = new ColorConvertOp(ColorSpace.getInstance(ColorSpace.CS_sRGB), null).filter(img, null);
+		}
 
-    /**
-     * Compares file1 to file2 to see if they are the same based on a visual
-     * pixel by pixel comparison. This has issues with marking images different
-     * when they are not. Works perfectly for all images.
-     *
-     * @param file1 Image 1 to compare
-     * @param file2 Image 2 to compare
-     * @return <code>true</code> if both images are visually the same.
-     */
-    public final static boolean visuallyCompare(final File file1, final File file2) {
+		final PixelGrabber pg = new PixelGrabber(pixelImg, 0, 0, width, height, pixelData, 0, width);
 
-        logger.debug("Start comparing \"{}\" and \"{}\".", file1.getPath(), file2.getPath());
+		try {
+			if (!pg.grabPixels()) {
+				throw new RuntimeException();
+			}
+		} catch (final InterruptedException ie) {
+			throw new ImageFileOptimizationException(file.getPath(), ie);
+		}
 
-        if (file1 == file2) {
-            return true;
-        }
+		return pixelData;
+	}
 
-        final boolean answer = visuallyCompareJava(file1, file2);
+	private static final void handleOptimizationFailure(final Process ps, final String binaryApplicationName, final File originalFile)
+		throws ThirdPartyBinaryNotFoundException, ImageFileOptimizationException {
 
-        if (!answer) {
-            logger.info("The files \"{}\" and \"{}\" are not pixel by pixel the same image. Manual comparison required.", file1.getPath(), file2.getPath());
-        }
+		try (final StringWriter writer = new StringWriter();
+			final InputStream is = ps.getInputStream()) {
+			try {
+				IOUtils.copy(is, writer, StandardCharsets.UTF_8);
+				final StringBuilder errorMessage =
+					new StringBuilder("Image conversion failed with exit code: ").append(ps.exitValue()).append(". ").append(writer);
+				if (ps.exitValue() == 127 /* command not found */) {
+					throw new ThirdPartyBinaryNotFoundException(binaryApplicationName,
+						"Most likely this is due to ImageMagick not being installed on the OS. On Ubuntu run \"sudo apt-get install imagemagick\".",
+						new RuntimeException(errorMessage.toString()));
+				}
+				throw ImageFileOptimizationException.getInstance(originalFile, new RuntimeException(errorMessage.toString()));
+			} catch (final IOException ioe) {
+				logger.error("Unable to redirect error output for child process for " + originalFile, ioe);
+			}
+		} catch (final ThirdPartyBinaryNotFoundException | ImageFileOptimizationException ifoe) {
+			throw ifoe;
+		} catch (final Exception exp) {
+			throw new RuntimeException(exp);
+		}
+	}
 
-        logger.debug("Finish comparing \"{}\" and \"{}\".", file1.getPath(), file2.getPath());
+	/**
+	 * Checks to see if the image is an animated gif.
+	 *
+	 * @param file
+	 *            The file to check
+	 * @return <code>true</code> if it is an animated gif.
+	 */
+	public final static boolean isAminatedGif(final File file) {
 
-        return answer;
-    }
+		try (final ImageInputStream stream = ImageIO.createImageInputStream(file)) {
+			if (stream == null) {
+				return true;
+			}
+			final Iterator<ImageReader> readers = ImageIO.getImageReaders(stream);
+			if (!readers.hasNext()) {
+				throw new RuntimeException("no image reader found");
+			}
+			final ImageReader reader = readers.next();
+			reader.setInput(stream); // don't omit this line!
+			return (reader.getNumImages(true) > 1); // don't use false!
+		} catch (final IOException ioe) {
+			throw new RuntimeException(ioe);
+		}
+	}
 
-    /**
-     * @param file The image to check
-     * @return <code>true</code> if the image contains one or more pixels with
-     *         some percentage of transparency (Alpha)
-     */
-    public final static boolean containsAlphaTransparency(final File file) {
-        logger.debug("Start Alpha pixel check for {}.", file.getPath());
+	/**
+	 * Compares file1 to file2 to see if they are the same based on a visual pixel by pixel comparison. This has issues with
+	 * marking images different when they are not. Works perfectly for all images.
+	 *
+	 * @param file1
+	 *            Image 1 to compare
+	 * @param file2
+	 *            Image 2 to compare
+	 * @return <code>true</code> if both images are visually the same.
+	 */
+	public final static boolean visuallyCompare(final File file1, final File file2) {
 
-        final boolean answer = false;
-        for (final int pixel : getPixels(getBufferedImage(file), file)) {
-            //If the alpha is 0 for both that means that the pixels are 100%
-            //transparent and the color does not matter. Return false if
-            //only 1 is 100% transparent.
-            if (((pixel >> 24) & 0xff) != 255) {
-                logger.debug("The image contains Aplha Transparency.");
-                return true;
-            }
-        }
+		logger.debug("Start comparing \"{}\" and \"{}\".", file1.getPath(), file2.getPath());
 
-        logger.debug("The image does not contain Aplha Transparency.");
-        logger.debug("End Alpha pixel check for {}.", file.getPath());
+		if (file1 == file2) {
+			return true;
+		}
 
-        return answer;
-    }
+		final boolean answer = visuallyCompareJava(file1, file2);
 
-    private static final void handleOptimizationFailure(final Process ps, final String binaryApplicationName, final File originalFile) throws ThirdPartyBinaryNotFoundException, ImageFileOptimizationException {
+		if (!answer) {
+			logger.info("The files \"{}\" and \"{}\" are not pixel by pixel the same image. Manual comparison required.", file1.getPath(), file2.getPath());
+		}
 
-        try (final StringWriter writer = new StringWriter();
-            final InputStream is      = ps.getInputStream()) {
-            try {
-                IOUtils.copy(is, writer, StandardCharsets.UTF_8);
-                final StringBuilder errorMessage = new StringBuilder("Image conversion failed with exit code: ").append(ps.exitValue()).append(". ").append(writer);
-                if (ps.exitValue() == 127 /* command not found */) {
-                    throw new ThirdPartyBinaryNotFoundException(binaryApplicationName, "Most likely this is due to ImageMagick not being installed on the OS. On Ubuntu run \"sudo apt-get install imagemagick\".", new RuntimeException(errorMessage.toString()));
-                }
-                throw ImageFileOptimizationException.getInstance(originalFile, new RuntimeException(errorMessage.toString()));
-            } catch (final IOException ioe) {
-                logger.error("Unable to redirect error output for child process for " + originalFile, ioe);
-            }
-        } catch(final ThirdPartyBinaryNotFoundException | ImageFileOptimizationException ifoe) {
-            throw ifoe;
-        } catch(final Exception exp) {
-            throw new RuntimeException(exp);
-        }
-    }
+		logger.debug("Finish comparing \"{}\" and \"{}\".", file1.getPath(), file2.getPath());
 
-    /**
-     * Converts an image from one format to another format using Image Magic's
-     * {@value #CONVERT_BINARY} binary. This works better than what JAVA has
-     * built in.
-     *
-     * @param fromImage The starting image.
-     * @param toImage The ending (converted) image.
-     * @throws InterruptedException Happens in the application is being rude.
-     * @throws ThirdPartyBinaryNotFoundException Thrown if the
-     *                                           {@value #CONVERT_BINARY}
-     *                                           application does not exist.
-     */
-    public final void convertImageNative(final File fromImage, final File toImage) throws InterruptedException, ThirdPartyBinaryNotFoundException {
-        final Process ps;
-        try {
-            ps = new ProcessBuilder(List.of(convertBinaryAppLocation, fromImage.getCanonicalPath(), toImage.getCanonicalPath()))
-                    .start();
-        } catch(final IOException ioe) {
-            throw new ThirdPartyBinaryNotFoundException(convertBinaryAppLocation, "Most likely this is due to ImageMagic not being installed on the OS. On Ubuntu run \"sudo apt-get install imagemagick\".", ioe);
-        }
+		return answer;
+	}
 
-        final int status = ps.waitFor();
-        if ((status != 0) || !toImage.exists()) {
-            handleOptimizationFailure(ps, convertBinaryAppLocation, fromImage);
-        }
-    }
+	/**
+	 * Compares file1 to file2 to see if they are the same based on a visual pixel by pixel comparison. This has issues with
+	 * marking images different when they are not. Works perfectly for all images.
+	 *
+	 * @param file1
+	 *            First file to compare
+	 * @param file2
+	 *            Second image to compare
+	 * @return <code>true</code> if they are equal, otherwise <code>false</code>.
+	 */
+	private final static boolean visuallyCompareJava(final File file1, final File file2) {
+		return equals(getPixels(getBufferedImage(file1), file1), getPixels(getBufferedImage(file2), file2));
+	}
 
-    /**
-     * Checks to see if the image is an animated gif.
-     *
-     * @param file The file to check
-     * @return <code>true</code> if it is an animated gif.
-     */
-    public final static boolean isAminatedGif(final File file) {
+	private final String convertBinaryAppLocation;
 
-        try (final ImageInputStream stream = ImageIO.createImageInputStream(file)) {
-            if (stream == null) {
-                return true;
-            }
-            final Iterator<ImageReader> readers = ImageIO.getImageReaders(stream);
-            if (!readers.hasNext()) {
-                throw new RuntimeException("no image reader found");
-            }
-            final ImageReader reader = readers.next();
-            reader.setInput(stream); // don't omit this line!
-            return (reader.getNumImages(true) > 1); // don't use false!
-        } catch (final IOException ioe) {
-            throw new RuntimeException(ioe);
-        }
-    }
+	/**
+	 * Constructor.
+	 * 
+	 * @param binaryAppLocation
+	 *            Unused - previously defined Windows App Location for Windows variant of Optimizer
+	 */
+	public ImageUtils(final String binaryAppLocation) {
+		this.convertBinaryAppLocation = CONVERT_BINARY;
+	}
+
+	/**
+	 * Converts an image from one format to another format using Image Magic's {@value #CONVERT_BINARY} binary. This works better
+	 * than what JAVA has built in.
+	 *
+	 * @param fromImage
+	 *            The starting image.
+	 * @param toImage
+	 *            The ending (converted) image.
+	 * @throws InterruptedException
+	 *             Happens in the application is being rude.
+	 * @throws ThirdPartyBinaryNotFoundException
+	 *             Thrown if the {@value #CONVERT_BINARY} application does not exist.
+	 */
+	public final void convertImageNative(final File fromImage, final File toImage) throws InterruptedException, ThirdPartyBinaryNotFoundException {
+		final Process ps;
+		try {
+			ps = new ProcessBuilder(List.of(convertBinaryAppLocation, fromImage.getCanonicalPath(), toImage.getCanonicalPath()))
+				.start();
+		} catch (final IOException ioe) {
+			throw new ThirdPartyBinaryNotFoundException(convertBinaryAppLocation,
+				"Most likely this is due to ImageMagic not being installed on the OS. On Ubuntu run \"sudo apt-get install imagemagick\".", ioe);
+		}
+
+		final int status = ps.waitFor();
+		if ((status != 0) || !toImage.exists()) {
+			handleOptimizationFailure(ps, convertBinaryAppLocation, fromImage);
+		}
+	}
 }
