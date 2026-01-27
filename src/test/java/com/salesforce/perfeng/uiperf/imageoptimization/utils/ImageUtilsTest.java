@@ -46,6 +46,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLConnection;
+import java.nio.file.Files;
 
 import org.apache.commons.io.FileUtils;
 import org.hamcrest.io.FileMatchers;
@@ -163,9 +164,7 @@ public class ImageUtilsTest {
         }
         assertThat(ImageUtils.visuallyCompare(new File("./src/test/java/com/salesforce/perfeng/uiperf/imageoptimization/utils/forceapp_bg.gif"), convertedFile), equalTo(TRUE));
 
-        final File tmpDir = File.createTempFile(ImageOptimizationServiceTest.class.getName(), "");
-        tmpDir.delete();
-        tmpDir.mkdir();
+        final File tmpDir = Files.createTempDirectory(ImageOptimizationServiceTest.class.getName()).toFile();
         tmpDir.deleteOnExit();
 
         convertedFile = new File(tmpDir.getCanonicalPath() + "/forceapp_bg." + IImageOptimizationService.PNG_EXTENSION);
