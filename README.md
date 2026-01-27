@@ -22,15 +22,36 @@ We provide a helper script to automate the installation of the Java application 
 
 ### Installation ###
 
-Run the management script located in the `scripts/` directory. This script detects your OS (Linux/Mac), installs system tools via `apt` or `brew`, builds the project, and configures the `image-optimizer` command.
+Run the management script located in the `script/` directory. This script detects your OS (Linux/Mac), installs system tools via `apt` or `brew`, builds the project, and configures the `image-optimizer` command.
 
 ```bash
 # 1. Give execution permission to the script
-chmod +x scripts/install.sh
+chmod +x script/install.sh
 
 # 2. Run the installer
-./scripts/manage_image_optimizer.sh
+./script/install.sh
 ```
+
+This will install the application for the current user so it can be called from anywhere using the following command.
+
+```bash
+image-optimizer path/to/image.png path/to/folder/of/images/
+```
+
+### Uninstallation ###
+
+To remove the application and all installed files, run:
+
+```bash
+./script/install.sh uninstall
+```
+
+This will remove:
+
+* The `image-optimizer` wrapper script from `~/.local/bin/`
+* The entire installation directory at `~/.local/share/ImageOptimization/`
+
+Note: This does not remove system packages (like Maven, ImageMagick, etc.) that were installed via package managers (apt/brew). Those must be removed manually if desired.
 
 ## Full Install & Setup ##
 
