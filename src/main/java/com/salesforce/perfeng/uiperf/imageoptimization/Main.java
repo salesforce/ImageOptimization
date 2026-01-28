@@ -121,8 +121,17 @@ public class Main {
         }
 
         final IImageOptimizationService<Void> service = ImageOptimizationService.createInstance(IMAGE_OPTIMIZATION_BINARY_LOCATION, 0);
-        final List<OptimizationResult<Void>> list = service.optimizeAllImages(FileTypeConversion.ALL, false, imagesToOptimize);
+        final List<OptimizationResult<Void>> list = service.optimizeAllImages(FileTypeConversion.NONE, false, imagesToOptimize);
         System.out.println(list);
+        long originalSize = 0;
+        long optimizedSize = 0;
+        for (final OptimizationResult<Void> result : list) {
+            originalSize  += result.getOriginalFileSize();
+            optimizedSize += result.getOptimizedFileSize();
+        }
+        System.out.println("Total Original Size: " + originalSize);
+        System.out.println("Total Optimized Size: " + optimizedSize);
+        System.out.println("Total Savings: " + (originalSize - optimizedSize));
         System.out.println("Images can be downloaded from: " + service.getFinalResultsDirectory());
     }
 
